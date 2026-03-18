@@ -1,0 +1,71 @@
+[
+	{
+		"organization_id": "org-knee-1001",
+		"clinic_name": "Knee Pain 360 Austin Clinic",
+		"logo_url": "https://picsum.photos/300/120",
+		"phone": "(512) 555-0101",
+		"addresses": [
+			{
+				"line1": "101 Congress Ave",
+				"city": "Austin",
+				"state": "TX",
+				"zip": "78701"
+			}
+		],
+		"states": ["TX"],
+		"website_url": "https://kneepain360.com/austin",
+		"google_place_id": "ChIJ-AUSTIN-1001",
+		"assessment_id": "assess-knee-1001",
+		"bio": "Comprehensive knee pain care, diagnostics, and treatment planning.",
+		"clinic_info": [
+			{ "label": "Hours", "value": "Mon-Fri 8am-5pm" },
+			{ "label": "Languages", "value": "English, Spanish" }
+		],
+		"reviews": [{ "author": "Patient A", "rating": 5, "comment": "Excellent care and follow-up." }],
+		"updated_at": "2026-03-17T23:20:00Z"
+	},
+	{
+		"organization_id": "org-knee-1002",
+		"clinic_name": "Knee Pain 360 Dallas Clinic",
+		"logo_url": "https://picsum.photos/300/120",
+		"phone": "(214) 555-0102",
+		"addresses": [
+			{
+				"line1": "2201 Main St",
+				"city": "Dallas",
+				"state": "TX",
+				"zip": "75201"
+			}
+		],
+		"states": ["TX", "OK"],
+		"website_url": "https://kneepain360.com/dallas",
+		"google_place_id": "ChIJ-DALLAS-1002",
+		"assessment_id": "assess-knee-1002",
+		"bio": "Joint restoration specialists with integrated physical therapy.",
+		"clinic_info": [{ "label": "Parking", "value": "Validated garage parking" }],
+		"reviews": [{ "author": "Patient B", "rating": 4, "comment": "Friendly staff and fast scheduling." }],
+		"updated_at": "2026-03-17T23:25:00Z"
+	},
+	{
+		"organization_id": "org-knee-1003",
+		"clinic_name": "Knee Pain 360 Houston Clinic",
+		"logo_url": "https://picsum.photos/300/120",
+		"phone": "(713) 555-0103",
+		"addresses": [
+			{
+				"line1": "1500 Smith St",
+				"city": "Houston",
+				"state": "TX",
+				"zip": "77002"
+			}
+		],
+		"states": ["TX", "LA"],
+		"website_url": "https://kneepain360.com/houston",
+		"google_place_id": "ChIJ-HOUSTON-1003",
+		"assessment_id": "assess-knee-1003",
+		"bio": "Advanced minimally invasive options for chronic knee pain.",
+		"clinic_info": [{ "label": "Telehealth", "value": "Available" }],
+		"reviews": [{ "author": "Patient C", "rating": 5, "comment": "Great communication and outcomes." }],
+		"updated_at": "2026-03-17T23:30:00Z"
+	}
+]

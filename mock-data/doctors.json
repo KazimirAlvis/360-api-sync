@@ -1,0 +1,52 @@
+[
+	{
+		"doctor_id": "doc-2001",
+		"doctor_slug": "jane-smith-md",
+		"full_name": "Dr. Jane Smith",
+		"title": "Orthopedic Surgeon",
+		"bio": "Board-certified orthopedic surgeon focused on knee preservation and replacement.",
+		"photo_url": "https://picsum.photos/200/300",
+		"organization_id": "org-knee-1001",
+		"updated_at": "2026-03-17T23:21:00Z"
+	},
+	{
+		"doctor_id": "doc-2002",
+		"doctor_slug": "michael-lee-do",
+		"full_name": "Dr. Michael Lee",
+		"title": "Sports Medicine Specialist",
+		"bio": "Specialist in non-operative and minimally invasive knee treatments.",
+		"photo_url": "https://picsum.photos/200/300",
+		"organization_id": "org-knee-1002",
+		"updated_at": "2026-03-17T23:26:00Z"
+	},
+	{
+		"doctor_id": "doc-2003",
+		"doctor_slug": "alex-rivera-md",
+		"full_name": "Dr. Alex Rivera",
+		"title": "Pain Management Specialist",
+		"bio": "Expert in non-surgical pain relief protocols for knee arthritis.",
+		"photo_url": "https://picsum.photos/200/300",
+		"organization_id": "org-knee-1001",
+		"updated_at": "2026-03-17T23:27:00Z"
+	},
+	{
+		"doctor_id": "doc-2004",
+		"doctor_slug": "sarah-chen-md",
+		"full_name": "Dr. Sarah Chen",
+		"title": "Orthopedic Surgeon",
+		"bio": "Joint replacement specialist focused on rapid recovery pathways.",
+		"photo_url": "https://picsum.photos/200/300",
+		"organization_id": "org-knee-1003",
+		"updated_at": "2026-03-17T23:31:00Z"
+	},
+	{
+		"doctor_id": "doc-2005",
+		"doctor_slug": "david-johnson-do",
+		"full_name": "Dr. David Johnson",
+		"title": "Rehabilitation Physician",
+		"bio": "Designs personalized rehab programs after injections and procedures.",
+		"photo_url": "https://picsum.photos/200/300",
+		"organization_id": "org-knee-1003",
+		"updated_at": "2026-03-17T23:35:00Z"
+	}
+]
