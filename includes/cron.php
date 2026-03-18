@@ -57,6 +57,8 @@ class Cron {
 		$api_client  = new Api_Client();
 		$clinic_sync = new Clinic_Sync();
 		$doctor_sync = new Doctor_Sync();
+		$settings    = Api_Client::get_settings();
+		$dry_run     = ! empty( $settings['enable_dry_run'] );
 
 		$last_sync = (string) get_option( self::LAST_SYNC_OPTION, '' );
 
@@ -126,18 +128,48 @@ class Cron {
 			return $result;
 		}
 
-		$clinic_result = $clinic_sync->sync( $clinics, $last_sync );
-		$doctor_result = $doctor_sync->sync( $clinics, $last_sync );
+		$clinic_count = count( $clinics );
+		if ( $clinic_count > 2000 ) {
+			$error = sprintf( 'ERROR: Sync aborted because clinics payload exceeded safety threshold (%d > 2000).', $clinic_count );
+			Sync_Log::log_run(
+				array(
+					'context'           => $context,
+					'clinics_processed' => 0,
+					'doctors_processed' => 0,
+					'images_imported'   => 0,
+					'errors'            => array( $error ),
+				)
+			);
+
+			$result = array(
+				'success' => false,
+				'error'   => $error,
+				'context' => $context,
+			);
+
+			update_option( '360_api_sync_last_run_result', $result, false );
+			return $result;
+		}
+
+		$clinic_result = $clinic_sync->sync( $clinics, $last_sync, $dry_run );
+		$doctor_result = $doctor_sync->sync( $clinics, $last_sync, $dry_run );
 		$clinic_errors = is_array( $clinic_result['errors'] ?? null ) ? $clinic_result['errors'] : array();
 		$doctor_errors = is_array( $doctor_result['errors'] ?? null ) ? $doctor_result['errors'] : array();
 		$all_errors    = array_merge( $clinic_errors, $doctor_errors );
+		$warnings      = $api_client->get_runtime_warnings();
+
+		if ( $dry_run ) {
+			$warnings[] = 'Dry run mode enabled: no posts, meta, or images were written.';
+		}
+
+		$log_messages = array_merge( $all_errors, $warnings );
 
 		$new_last_sync = $last_sync;
-		if ( empty( $all_errors ) ) {
+		if ( empty( $all_errors ) && ! $dry_run ) {
 			$new_last_sync = self::resolve_last_sync_time( $clinic_result, $doctor_result, $last_sync );
 		}
 
-		if ( empty( $all_errors ) && ! empty( $new_last_sync ) ) {
+		if ( empty( $all_errors ) && ! $dry_run && ! empty( $new_last_sync ) ) {
 			update_option( self::LAST_SYNC_OPTION, $new_last_sync, false );
 		}
 
@@ -146,6 +178,8 @@ class Cron {
 			'context'       => $context,
 			'clinic_result' => $clinic_result,
 			'doctor_result' => $doctor_result,
+			'dry_run'       => $dry_run,
+			'warnings'      => $warnings,
 			'last_sync_time' => $new_last_sync,
 			'ran_at'        => gmdate( 'c' ),
 		);
@@ -156,7 +190,7 @@ class Cron {
 				'clinics_processed' => (int) ( $clinic_result['processed'] ?? 0 ),
 				'doctors_processed' => (int) ( $doctor_result['processed'] ?? 0 ),
 				'images_imported'   => (int) ( $clinic_result['images_imported'] ?? 0 ) + (int) ( $doctor_result['images_imported'] ?? 0 ),
-				'errors'            => $all_errors,
+				'errors'            => $log_messages,
 			)
 		);
 

@@ -92,6 +92,7 @@ class Settings_Page {
 					'api_key'      => '',
 					'site_slug'    => '',
 					'enable_mock'  => 1,
+					'enable_dry_run' => 0,
 				),
 			)
 		);
@@ -107,6 +108,7 @@ class Settings_Page {
 			'api_key'      => sanitize_text_field( (string) ( $input['api_key'] ?? '' ) ),
 			'site_slug'    => sanitize_title( (string) ( $input['site_slug'] ?? '' ) ),
 			'enable_mock'  => ! empty( $input['enable_mock'] ) ? 1 : 0,
+			'enable_dry_run' => ! empty( $input['enable_dry_run'] ) ? 1 : 0,
 		);
 	}
 
@@ -190,6 +192,15 @@ class Settings_Page {
 							<label>
 								<input name="360_api_sync_settings[enable_mock]" type="checkbox" value="1" <?php checked( ! empty( $settings['enable_mock'] ) ); ?> />
 								<?php esc_html_e( 'Use local mock JSON files instead of remote API.', '360-api-sync' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Dry Run Mode', '360-api-sync' ); ?></th>
+						<td>
+							<label>
+								<input name="360_api_sync_settings[enable_dry_run]" type="checkbox" value="1" <?php checked( ! empty( $settings['enable_dry_run'] ) ); ?> />
+								<?php esc_html_e( 'Simulate sync and log what would change without writing posts, meta, or images.', '360-api-sync' ); ?>
 							</label>
 						</td>
 					</tr>

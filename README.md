@@ -22,6 +22,7 @@ Settings page fields:
 - API Key
 - Site Slug
 - Enable Mock API
+- Dry Run Mode
 - Manual Sync button
 
 Mock file:
@@ -36,6 +37,7 @@ Mock file:
     - `GET /sync?site_slug={site_slug}`
 - Auth headers:
     - `x-api-key: API_KEY`
+    - temporary fallback: `Authorization: Bearer API_KEY` (compatibility only)
 - State options:
     - `360_api_last_sync`
     - `360_api_sync_last_run_result`
@@ -84,7 +86,17 @@ Doctor identity key: `doctor_slug` (with legacy fallback to `doctor_id` when pre
 - Event hook: `360_api_sync_event`
 - Interval: every 6 hours
 - Order: fetch payload once, sync clinics, then sync nested doctors
+- Payload safety guard: sync aborts if clinic count is empty or exceeds 2000
 - Sync log page: **360 API Sync → Sync Log**
+
+## Dry Run Mode
+
+- Enable **Dry Run Mode** in plugin settings to simulate a sync.
+- When enabled, the plugin:
+    - fetches and parses API payloads
+    - computes create/update counts
+    - does **not** write posts, meta, images, or advance `360_api_last_sync`
+- Useful for validating API changes safely before live writes.
 
 Database log table:
 
@@ -111,7 +123,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.1.0`
+- Version: `1.1.1`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:

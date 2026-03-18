@@ -12,7 +12,7 @@ class Clinic_Sync {
 	 * @param array<int,array<string,mixed>> $clinics
 	 * @return array<string,mixed>
 	 */
-	public function sync( array $clinics, string $last_sync = '' ): array {
+	public function sync( array $clinics, string $last_sync = '', bool $dry_run = false ): array {
 		$results = array(
 			'processed'      => 0,
 			'skipped_unchanged' => 0,
@@ -57,6 +57,11 @@ class Clinic_Sync {
 			);
 
 			if ( $is_new ) {
+				if ( $dry_run ) {
+					$results['created']++;
+					continue;
+				}
+
 				$post_id = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					$results['errors'][] = sprintf( 'Clinic %s insert failed: %s', $organization_id, $post_id->get_error_message() );
@@ -64,6 +69,11 @@ class Clinic_Sync {
 				}
 				$results['created']++;
 			} else {
+				if ( $dry_run ) {
+					$results['updated']++;
+					continue;
+				}
+
 				$post_data['ID'] = $post_id;
 				$updated         = wp_update_post( $post_data, true );
 				if ( is_wp_error( $updated ) ) {

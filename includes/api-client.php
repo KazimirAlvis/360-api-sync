@@ -7,6 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Api_Client {
+	/**
+	 * @var array<int,string>
+	 */
+	private $runtime_warnings = array();
 
 	/**
 	 * @return array<string,mixed>
@@ -17,6 +21,7 @@ class Api_Client {
 			'api_key'      => '',
 			'site_slug'    => '',
 			'enable_mock'  => 1,
+			'enable_dry_run' => 0,
 		);
 
 		$settings = get_option( '360_api_sync_settings', array() );
@@ -30,6 +35,7 @@ class Api_Client {
 		$settings['api_key']      = sanitize_text_field( (string) $settings['api_key'] );
 		$settings['site_slug']    = sanitize_title( (string) $settings['site_slug'] );
 		$settings['enable_mock']  = ! empty( $settings['enable_mock'] ) ? 1 : 0;
+		$settings['enable_dry_run'] = ! empty( $settings['enable_dry_run'] ) ? 1 : 0;
 
 		return $settings;
 	}
@@ -38,6 +44,8 @@ class Api_Client {
 	 * @return array<string,mixed>|\WP_Error
 	 */
 	public function get_sync_payload() {
+		$this->runtime_warnings = array();
+
 		if ( $this->is_mock_mode() ) {
 			$data = $this->load_mock_data( 'clinics.json' );
 			if ( is_wp_error( $data ) ) {
@@ -85,6 +93,13 @@ class Api_Client {
 	}
 
 	/**
+	 * @return array<int,string>
+	 */
+	public function get_runtime_warnings(): array {
+		return $this->runtime_warnings;
+	}
+
+	/**
 	 * @return array<string,mixed>|\WP_Error
 	 */
 	private function get_remote_payload() {
@@ -100,16 +115,7 @@ class Api_Client {
 
 		$api_url = trailingslashit( $settings['api_base_url'] ) . 'sync?site_slug=' . rawurlencode( (string) $settings['site_slug'] );
 
-		$response = wp_remote_get(
-			esc_url_raw( $api_url ),
-			array(
-				'timeout' => 30,
-				'headers' => array(
-					'Accept'    => 'application/json',
-					'x-api-key' => (string) $settings['api_key'],
-				),
-			)
-		);
+		$response = $this->request_sync_payload( $api_url, (string) $settings['api_key'], false );
 
 		if ( is_wp_error( $response ) ) {
 			$existing_data = $response->get_error_data();
@@ -123,6 +129,33 @@ class Api_Client {
 			return $response;
 		}
 
+		$parsed = $this->parse_remote_response( $response, (string) $settings['site_slug'], $api_url );
+		if ( ! is_wp_error( $parsed ) ) {
+			return $parsed;
+		}
+
+		$response_code = (int) wp_remote_retrieve_response_code( $response );
+		$fallback_response = $this->request_sync_payload( $api_url, (string) $settings['api_key'], true );
+		if ( is_wp_error( $fallback_response ) ) {
+			return $fallback_response;
+		}
+
+		$fallback_parsed = $this->parse_remote_response( $fallback_response, (string) $settings['site_slug'], $api_url );
+		if ( ! is_wp_error( $fallback_parsed ) ) {
+			$this->runtime_warnings[] = sprintf(
+				'Bearer fallback was used for /sync request (primary status %d). This compatibility path will be removed in a future release.',
+				$response_code
+			);
+			return $fallback_parsed;
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * @return array<string,mixed>|\WP_Error
+	 */
+	private function parse_remote_response( array $response, string $site_slug, string $api_url ) {
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		$body = (string) wp_remote_retrieve_body( $response );
 
@@ -132,7 +165,7 @@ class Api_Client {
 				sprintf( 'API request failed with status %d.', $code ),
 				array(
 					'status'       => $code,
-					'site_slug'    => (string) $settings['site_slug'],
+					'site_slug'    => $site_slug,
 					'api_url'      => esc_url_raw( $api_url ),
 					'body_snippet' => substr( wp_strip_all_tags( $body ), 0, 500 ),
 				)
@@ -149,6 +182,28 @@ class Api_Client {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * @return array<string,mixed>|\WP_Error
+	 */
+	private function request_sync_payload( string $api_url, string $api_key, bool $include_bearer = false ) {
+		$headers = array(
+			'Accept'    => 'application/json',
+			'x-api-key' => $api_key,
+		);
+
+		if ( $include_bearer ) {
+			$headers['Authorization'] = 'Bearer ' . $api_key;
+		}
+
+		return wp_remote_get(
+			esc_url_raw( $api_url ),
+			array(
+				'timeout' => 30,
+				'headers' => $headers,
+			)
+		);
 	}
 
 	/**
