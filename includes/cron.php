@@ -60,9 +60,29 @@ class Cron {
 
 		$last_sync = (string) get_option( self::LAST_SYNC_OPTION, '' );
 
-		$clinics = $api_client->get_clinics( $last_sync );
-		if ( is_wp_error( $clinics ) ) {
-			$errors = array( 'API request failure (clinics): ' . $clinics->get_error_message() );
+		$payload = $api_client->get_sync_payload();
+		if ( is_wp_error( $payload ) ) {
+			$error_message = 'API request failure (/sync): ' . $payload->get_error_message();
+			$error_data    = $payload->get_error_data();
+			if ( is_array( $error_data ) ) {
+				$status    = isset( $error_data['status'] ) ? (string) $error_data['status'] : '';
+				$site_slug = isset( $error_data['site_slug'] ) ? (string) $error_data['site_slug'] : '';
+				$snippet   = isset( $error_data['body_snippet'] ) ? (string) $error_data['body_snippet'] : '';
+
+				if ( '' !== $status ) {
+					$error_message .= ' [status=' . $status . ']';
+				}
+
+				if ( '' !== $site_slug ) {
+					$error_message .= ' [site_slug=' . $site_slug . ']';
+				}
+
+				if ( '' !== $snippet ) {
+					$error_message .= ' [body=' . $snippet . ']';
+				}
+			}
+
+			$errors = array( $error_message );
 			Sync_Log::log_run(
 				array(
 					'context'           => $context,
@@ -75,52 +95,54 @@ class Cron {
 
 			$result = array(
 				'success' => false,
-				'error'   => $clinics->get_error_message(),
+				'error'   => $payload->get_error_message(),
 				'context' => $context,
 			);
 			update_option( '360_api_sync_last_run_result', $result, false );
 			return $result;
 		}
 
-		$clinic_result = $clinic_sync->sync( $clinics );
-
-		$doctors = $api_client->get_doctors( $last_sync );
-		if ( is_wp_error( $doctors ) ) {
-			$clinic_errors = is_array( $clinic_result['errors'] ?? null ) ? $clinic_result['errors'] : array();
-			$errors        = array_merge( $clinic_errors, array( 'API request failure (doctors): ' . $doctors->get_error_message() ) );
+		$clinics = $payload['clinics'] ?? array();
+		if ( ! is_array( $clinics ) || empty( $clinics ) ) {
+			$warning = 'WARNING: Sync aborted because API payload contained no clinics. Last sync cursor was not advanced.';
 
 			Sync_Log::log_run(
 				array(
 					'context'           => $context,
-					'clinics_processed' => (int) ( $clinic_result['processed'] ?? 0 ),
+					'clinics_processed' => 0,
 					'doctors_processed' => 0,
-					'images_imported'   => (int) ( $clinic_result['images_imported'] ?? 0 ),
-					'errors'            => $errors,
+					'images_imported'   => 0,
+					'errors'            => array( $warning ),
 				)
 			);
 
 			$result = array(
-				'success'       => false,
-				'error'         => $doctors->get_error_message(),
-				'context'       => $context,
-				'clinic_result' => $clinic_result,
+				'success' => false,
+				'warning' => $warning,
+				'context' => $context,
 			);
+
 			update_option( '360_api_sync_last_run_result', $result, false );
 			return $result;
 		}
 
-		$doctor_result = $doctor_sync->sync( $doctors );
+		$clinic_result = $clinic_sync->sync( $clinics, $last_sync );
+		$doctor_result = $doctor_sync->sync( $clinics, $last_sync );
 		$clinic_errors = is_array( $clinic_result['errors'] ?? null ) ? $clinic_result['errors'] : array();
 		$doctor_errors = is_array( $doctor_result['errors'] ?? null ) ? $doctor_result['errors'] : array();
 		$all_errors    = array_merge( $clinic_errors, $doctor_errors );
 
-		$new_last_sync = self::resolve_last_sync_time( $clinic_result, $doctor_result, $last_sync );
-		if ( ! empty( $new_last_sync ) ) {
+		$new_last_sync = $last_sync;
+		if ( empty( $all_errors ) ) {
+			$new_last_sync = self::resolve_last_sync_time( $clinic_result, $doctor_result, $last_sync );
+		}
+
+		if ( empty( $all_errors ) && ! empty( $new_last_sync ) ) {
 			update_option( self::LAST_SYNC_OPTION, $new_last_sync, false );
 		}
 
 		$result = array(
-			'success'       => true,
+			'success'       => empty( $all_errors ),
 			'context'       => $context,
 			'clinic_result' => $clinic_result,
 			'doctor_result' => $doctor_result,

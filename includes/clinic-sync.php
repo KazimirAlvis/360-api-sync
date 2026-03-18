@@ -12,9 +12,10 @@ class Clinic_Sync {
 	 * @param array<int,array<string,mixed>> $clinics
 	 * @return array<string,mixed>
 	 */
-	public function sync( array $clinics ): array {
+	public function sync( array $clinics, string $last_sync = '' ): array {
 		$results = array(
 			'processed'      => 0,
+			'skipped_unchanged' => 0,
 			'created'        => 0,
 			'updated'        => 0,
 			'images_imported'=> 0,
@@ -30,6 +31,16 @@ class Clinic_Sync {
 			$organization_id = sanitize_text_field( (string) ( $clinic['organization_id'] ?? '' ) );
 			if ( empty( $organization_id ) ) {
 				$results['errors'][] = 'Clinic record skipped: missing organization_id.';
+				continue;
+			}
+
+			$item_updated_at = sanitize_text_field( (string) ( $clinic['updated_at'] ?? '' ) );
+			if ( ! empty( $item_updated_at ) && $this->is_more_recent( $item_updated_at, (string) $results['max_updated_at'] ) ) {
+				$results['max_updated_at'] = $item_updated_at;
+			}
+
+			if ( $this->is_unchanged_since( $item_updated_at, $last_sync ) ) {
+				$results['skipped_unchanged']++;
 				continue;
 			}
 
@@ -77,10 +88,6 @@ class Clinic_Sync {
 				}
 			}
 
-			$item_updated_at = sanitize_text_field( (string) ( $clinic['updated_at'] ?? '' ) );
-			if ( ! empty( $item_updated_at ) && $this->is_more_recent( $item_updated_at, (string) $results['max_updated_at'] ) ) {
-				$results['max_updated_at'] = $item_updated_at;
-			}
 		}
 
 		return $results;
@@ -94,8 +101,17 @@ class Clinic_Sync {
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
 				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					'relation' => 'OR',
 					array(
 						'key'   => '_360_organization_id',
+						'value' => $organization_id,
+					),
+					array(
+						'key'   => 'clinic_organization_id',
+						'value' => $organization_id,
+					),
+					array(
+						'key'   => 'organization_id',
 						'value' => $organization_id,
 					),
 				),
@@ -118,6 +134,7 @@ class Clinic_Sync {
 
 		$meta_map = array(
 			'_360_organization_id' => $organization_id,
+			'organization_id'      => $organization_id,
 			'_360_phone'           => sanitize_text_field( (string) ( $clinic['phone'] ?? '' ) ),
 			'_360_website_url'     => esc_url_raw( (string) ( $clinic['website_url'] ?? '' ) ),
 			'_360_google_place_id' => sanitize_text_field( (string) ( $clinic['google_place_id'] ?? '' ) ),
@@ -272,7 +289,7 @@ class Clinic_Sync {
 		}
 
 		$parts = array();
-		foreach ( array( 'line1', 'line2', 'city', 'state', 'zip' ) as $part_key ) {
+		foreach ( array( 'street', 'line1', 'line2', 'city', 'state', 'zip' ) as $part_key ) {
 			if ( ! empty( $first[ $part_key ] ) ) {
 				$parts[] = sanitize_text_field( (string) $first[ $part_key ] );
 			}
@@ -315,5 +332,20 @@ class Clinic_Sync {
 		}
 
 		return $candidate_time > $current_time;
+	}
+
+	private function is_unchanged_since( string $updated_at, string $last_sync ): bool {
+		if ( '' === $last_sync || '' === $updated_at ) {
+			return false;
+		}
+
+		$updated_time = strtotime( $updated_at );
+		$last_time    = strtotime( $last_sync );
+
+		if ( false === $updated_time || false === $last_time ) {
+			return false;
+		}
+
+		return $updated_time <= $last_time;
 	}
 }

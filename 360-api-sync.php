@@ -3,7 +3,7 @@
  * Plugin Name: 360 API Sync
  * Plugin URI: https://github.com/KazimirAlvis/360-api-sync
  * Description: Synchronizes clinic and doctor data from the PR360 API into WordPress custom post types used by the 360 medical site network.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: PR360
  * License: GPL2+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'API360_SYNC_VERSION', '1.0.0' );
+define( 'API360_SYNC_VERSION', '1.1.0' );
 define( 'THREESIXTY_API_SYNC_VERSION', API360_SYNC_VERSION );
 define( 'THREESIXTY_API_SYNC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'THREESIXTY_API_SYNC_URL', plugin_dir_url( __FILE__ ) );

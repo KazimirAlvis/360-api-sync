@@ -4,7 +4,7 @@ Repository: https://github.com/KazimirAlvis/360-api-sync
 
 ## Plugin Overview
 
-360 API Sync synchronizes clinic and doctor content from PR360 API endpoints into existing WordPress `clinic` and `doctor` CPTs. It supports remote API mode and mock JSON mode.
+360 API Sync synchronizes clinic and doctor content from the PR360 API into existing WordPress `clinic` and `doctor` CPTs. It supports remote API mode and mock JSON mode.
 
 ## Installation
 
@@ -24,24 +24,28 @@ Settings page fields:
 - Enable Mock API
 - Manual Sync button
 
-Mock files:
+Mock file:
 
 - `mock-data/clinics.json`
-- `mock-data/doctors.json`
 
 ## API Sync Architecture
 
-- Endpoints:
-    - `GET /api/{site-slug}/clinics`
-    - `GET /api/{site-slug}/doctors`
-- Delta sync query:
-    - `updated_since=<ISO timestamp>`
+- Base URL:
+    - `https://cmltutizsixpurslzfzl.supabase.co/functions/v1`
+- Endpoint:
+    - `GET /sync?site_slug={site_slug}`
 - Auth headers:
-    - `Authorization: Bearer API_KEY`
     - `x-api-key: API_KEY`
 - State options:
     - `360_api_last_sync`
     - `360_api_sync_last_run_result`
+
+API response shape:
+
+- `site_slug`
+- `condition`
+- `clinics[]`
+    - each clinic includes `doctors[]`
 
 ## Clinic & Doctor Mapping
 
@@ -56,7 +60,7 @@ Clinic identity key: `organization_id`
     - `clinic_reviews`
     - `google_place_id`
 
-Doctor identity keys: `doctor_slug` then fallback `doctor_id`
+Doctor identity key: `doctor_slug` (with legacy fallback to `doctor_id` when present)
 
 - Updates post + metadata including:
     - `doctor_name`
@@ -79,7 +83,7 @@ Doctor identity keys: `doctor_slug` then fallback `doctor_id`
 
 - Event hook: `360_api_sync_event`
 - Interval: every 6 hours
-- Order: clinics sync first, then doctors sync
+- Order: fetch payload once, sync clinics, then sync nested doctors
 - Sync log page: **360 API Sync → Sync Log**
 
 Database log table:
@@ -107,7 +111,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.0.0`
+- Version: `1.1.0`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:
