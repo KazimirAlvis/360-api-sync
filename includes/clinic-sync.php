@@ -28,11 +28,15 @@ class Clinic_Sync {
 				continue;
 			}
 
-			$organization_id = sanitize_text_field( (string) ( $clinic['organization_id'] ?? '' ) );
+			$clinic = $this->normalize_clinic_payload( $clinic );
+
+			$organization_id = $this->resolve_organization_id( $clinic );
 			if ( empty( $organization_id ) ) {
 				$results['errors'][] = 'Clinic record skipped: missing organization_id.';
 				continue;
 			}
+
+			$clinic['organization_id'] = $organization_id;
 
 			$item_updated_at = sanitize_text_field( (string) ( $clinic['updated_at'] ?? '' ) );
 			if ( ! empty( $item_updated_at ) && $this->is_more_recent( $item_updated_at, (string) $results['max_updated_at'] ) ) {
@@ -357,5 +361,58 @@ class Clinic_Sync {
 		}
 
 		return $updated_time <= $last_time;
+	}
+
+	/**
+	 * @param array<string,mixed> $clinic
+	 * @return array<string,mixed>
+	 */
+	private function normalize_clinic_payload( array $clinic ): array {
+		if ( isset( $clinic['clinic'] ) && is_array( $clinic['clinic'] ) ) {
+			$nested = $clinic['clinic'];
+			if ( is_array( $nested ) ) {
+				$clinic = array_merge( $nested, $clinic );
+			}
+		}
+
+		if ( isset( $clinic['details'] ) && is_array( $clinic['details'] ) ) {
+			$nested = $clinic['details'];
+			if ( is_array( $nested ) ) {
+				$clinic = array_merge( $nested, $clinic );
+			}
+		}
+
+		return $clinic;
+	}
+
+	/**
+	 * @param array<string,mixed> $clinic
+	 */
+	private function resolve_organization_id( array $clinic ): string {
+		$candidates = array(
+			$clinic['organization_id'] ?? '',
+			$clinic['organizationId'] ?? '',
+			$clinic['organizationID'] ?? '',
+			$clinic['clinic_organization_id'] ?? '',
+			$clinic['org_id'] ?? '',
+		);
+
+		if ( isset( $clinic['organization'] ) ) {
+			if ( is_string( $clinic['organization'] ) || is_numeric( $clinic['organization'] ) ) {
+				$candidates[] = $clinic['organization'];
+			} elseif ( is_array( $clinic['organization'] ) ) {
+				$candidates[] = $clinic['organization']['id'] ?? '';
+				$candidates[] = $clinic['organization']['organization_id'] ?? '';
+			}
+		}
+
+		foreach ( $candidates as $candidate ) {
+			$value = sanitize_text_field( (string) $candidate );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
 	}
 }

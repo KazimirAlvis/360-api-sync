@@ -123,7 +123,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.1.1`
+- Version: `1.1.2`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:

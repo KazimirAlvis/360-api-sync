@@ -29,8 +29,9 @@ class Doctor_Sync {
 				continue;
 			}
 
-			$organization_id = sanitize_text_field( (string) ( $clinic['organization_id'] ?? '' ) );
-			$doctors         = $clinic['doctors'] ?? array();
+			$clinic          = $this->normalize_clinic_payload( $clinic );
+			$organization_id = $this->resolve_organization_id( $clinic );
+			$doctors         = $clinic['doctors'] ?? ( $clinic['providers'] ?? array() );
 			if ( ! is_array( $doctors ) ) {
 				continue;
 			}
@@ -40,14 +41,15 @@ class Doctor_Sync {
 					continue;
 				}
 
-				$doctor_slug = sanitize_title( (string) ( $doctor['doctor_slug'] ?? '' ) );
+				$doctor_slug = sanitize_title( (string) ( $doctor['doctor_slug'] ?? ( $doctor['slug'] ?? '' ) ) );
 				$doctor_id   = sanitize_text_field( (string) ( $doctor['doctor_id'] ?? '' ) );
 				if ( empty( $doctor_slug ) ) {
 					$results['errors'][] = 'Doctor record skipped: missing doctor_slug.';
 					continue;
 				}
 
-				$doctor['organization_id'] = sanitize_text_field( (string) ( $doctor['organization_id'] ?? $organization_id ) );
+				$doctor['organization_id'] = $this->resolve_organization_id( $doctor, $organization_id );
+				$doctor['doctor_name']     = $this->resolve_doctor_name( $doctor );
 
 				$item_updated_at = sanitize_text_field( (string) ( $doctor['updated_at'] ?? '' ) );
 				if ( ! empty( $item_updated_at ) && $this->is_more_recent( $item_updated_at, (string) $results['max_updated_at'] ) ) {
@@ -279,5 +281,73 @@ class Doctor_Sync {
 		}
 
 		return $updated_time <= $last_time;
+	}
+
+	/**
+	 * @param array<string,mixed> $item
+	 * @return array<string,mixed>
+	 */
+	private function normalize_clinic_payload( array $item ): array {
+		if ( isset( $item['clinic'] ) && is_array( $item['clinic'] ) ) {
+			$item = array_merge( $item['clinic'], $item );
+		}
+
+		if ( isset( $item['details'] ) && is_array( $item['details'] ) ) {
+			$item = array_merge( $item['details'], $item );
+		}
+
+		return $item;
+	}
+
+	/**
+	 * @param array<string,mixed> $item
+	 */
+	private function resolve_organization_id( array $item, string $fallback = '' ): string {
+		$candidates = array(
+			$item['organization_id'] ?? '',
+			$item['organizationId'] ?? '',
+			$item['organizationID'] ?? '',
+			$item['clinic_organization_id'] ?? '',
+			$item['org_id'] ?? '',
+			$fallback,
+		);
+
+		if ( isset( $item['organization'] ) ) {
+			if ( is_string( $item['organization'] ) || is_numeric( $item['organization'] ) ) {
+				$candidates[] = $item['organization'];
+			} elseif ( is_array( $item['organization'] ) ) {
+				$candidates[] = $item['organization']['id'] ?? '';
+				$candidates[] = $item['organization']['organization_id'] ?? '';
+			}
+		}
+
+		foreach ( $candidates as $candidate ) {
+			$value = sanitize_text_field( (string) $candidate );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * @param array<string,mixed> $doctor
+	 */
+	private function resolve_doctor_name( array $doctor ): string {
+		$candidates = array(
+			$doctor['doctor_name'] ?? '',
+			$doctor['full_name'] ?? '',
+			$doctor['name'] ?? '',
+		);
+
+		foreach ( $candidates as $candidate ) {
+			$value = sanitize_text_field( (string) $candidate );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
 	}
 }

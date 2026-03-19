@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+- Added payload-shape compatibility for clinic records nested under `clinic`/`details`
+- Added organization ID key fallbacks (`organizationId`, `org_id`, nested `organization.id`)
+- Added doctor payload compatibility for `providers`, `slug`, and alternate name fields
+- Fixed dry-run false negatives caused by missing `organization_id` in variant payloads
+
 ## 1.1.1
 - Added temporary bearer-header fallback (x-api-key remains primary)
 - Added runtime warning logging when bearer fallback is used
