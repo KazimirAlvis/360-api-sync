@@ -13,13 +13,20 @@ class Clinic_Sync {
 	 * @return array<string,mixed>
 	 */
 	public function sync( array $clinics, string $last_sync = '', bool $dry_run = false ): array {
+		$settings  = Api_Client::get_settings();
+		$site_slug = sanitize_title( (string) ( $settings['site_slug'] ?? '' ) );
+
 		$results = array(
 			'processed'      => 0,
 			'skipped_unchanged' => 0,
+			'skipped_invalid' => 0,
 			'created'        => 0,
 			'updated'        => 0,
+			'temporary_created' => 0,
+			'temporary_upgraded' => 0,
 			'images_imported'=> 0,
 			'errors'         => array(),
+			'warnings'       => array(),
 			'max_updated_at' => '',
 		);
 
@@ -31,11 +38,17 @@ class Clinic_Sync {
 			$clinic = $this->normalize_clinic_payload( $clinic );
 
 			$organization_id = $this->resolve_organization_id( $clinic );
-			if ( empty( $organization_id ) ) {
-				$results['errors'][] = 'Clinic record skipped: missing organization_id.';
+			$clinic_name     = sanitize_text_field( (string) ( $clinic['clinic_name'] ?? '' ) );
+			$phone           = sanitize_text_field( (string) ( $clinic['phone'] ?? '' ) );
+
+			if ( '' === $organization_id && '' === $clinic_name ) {
+				$results['skipped_invalid']++;
+				$results['warnings'][] = 'Clinic record skipped: missing both organization_id and clinic_name.';
 				continue;
 			}
 
+			$temp_key = $this->build_temp_key( 'clinic', $site_slug, $clinic_name, $phone );
+			$is_temporary_input = '' === $organization_id;
 			$clinic['organization_id'] = $organization_id;
 
 			$item_updated_at = sanitize_text_field( (string) ( $clinic['updated_at'] ?? '' ) );
@@ -50,11 +63,20 @@ class Clinic_Sync {
 
 			$results['processed']++;
 
-			$post_id = $this->find_by_organization_id( $organization_id );
+			$post_id = 0;
+			if ( '' !== $organization_id ) {
+				$post_id = $this->find_by_organization_id( $organization_id );
+			}
+
+			if ( $post_id <= 0 && '' !== $temp_key ) {
+				$post_id = $this->find_by_temp_key( $temp_key );
+			}
+
 			$is_new  = $post_id <= 0;
+			$is_upgrading_temp = ( ! $is_new && '' !== $organization_id && $this->is_temporary_post( $post_id ) );
 
 			$post_data = array(
-				'post_title'   => sanitize_text_field( (string) ( $clinic['clinic_name'] ?? 'Clinic' ) ),
+				'post_title'   => '' !== $clinic_name ? $clinic_name : 'Temporary Clinic ' . substr( $temp_key, 0, 8 ),
 				'post_content' => wp_kses_post( (string) ( $clinic['bio'] ?? '' ) ),
 				'post_status'  => 'publish',
 				'post_type'    => 'clinic',
@@ -63,6 +85,10 @@ class Clinic_Sync {
 			if ( $is_new ) {
 				if ( $dry_run ) {
 					$results['created']++;
+					if ( $is_temporary_input ) {
+						$results['temporary_created']++;
+						$results['warnings'][] = 'Clinic missing organization_id — created as temporary record.';
+					}
 					continue;
 				}
 
@@ -75,6 +101,13 @@ class Clinic_Sync {
 			} else {
 				if ( $dry_run ) {
 					$results['updated']++;
+					if ( $is_upgrading_temp ) {
+						$results['temporary_upgraded']++;
+						$results['warnings'][] = sprintf( 'Clinic upgraded from temporary record using organization_id %s.', $organization_id );
+					}
+					if ( $is_temporary_input ) {
+						$results['warnings'][] = 'Clinic missing organization_id — updating as temporary record.';
+					}
 					continue;
 				}
 
@@ -87,12 +120,26 @@ class Clinic_Sync {
 				$results['updated']++;
 			}
 
-			$this->save_meta( (int) $post_id, $clinic );
+			$this->save_meta( (int) $post_id, $clinic, $organization_id, $temp_key );
+
+			if ( $is_temporary_input ) {
+				$results['warnings'][] = 'Clinic missing organization_id — created as temporary record.';
+			}
+
+			if ( $is_new && $is_temporary_input ) {
+				$results['temporary_created']++;
+			}
+
+			if ( $is_upgrading_temp ) {
+				$results['temporary_upgraded']++;
+				$results['warnings'][] = sprintf( 'Clinic upgraded from temporary record using organization_id %s.', $organization_id );
+			}
 
 			if ( ! empty( $clinic['logo_url'] ) ) {
-				$image_id = Image_Importer::import_clinic_logo( (string) $clinic['logo_url'], $organization_id, (int) $post_id );
+				$image_org_key = '' !== $organization_id ? $organization_id : 'temp-' . substr( $temp_key, 0, 12 );
+				$image_id = Image_Importer::import_clinic_logo( (string) $clinic['logo_url'], $image_org_key, (int) $post_id );
 				if ( is_wp_error( $image_id ) ) {
-					$results['errors'][] = sprintf( 'Clinic %s image import failed: %s', $organization_id, $image_id->get_error_message() );
+					$results['warnings'][] = sprintf( 'Clinic image import failed: %s', $image_id->get_error_message() );
 				} elseif ( function_exists( 'set_post_thumbnail' ) && $image_id > 0 ) {
 					$results['images_imported']++;
 					set_post_thumbnail( (int) $post_id, (int) $image_id );
@@ -105,6 +152,37 @@ class Clinic_Sync {
 		}
 
 		return $results;
+	}
+
+	private function find_by_temp_key( string $temp_key ): int {
+		if ( '' === $temp_key ) {
+			return 0;
+		}
+
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'clinic',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'   => '_360_temp_key',
+						'value' => $temp_key,
+					),
+				),
+			)
+		);
+
+		if ( empty( $query->posts ) ) {
+			return 0;
+		}
+
+		return (int) $query->posts[0];
+	}
+
+	private function is_temporary_post( int $post_id ): bool {
+		return (bool) get_post_meta( $post_id, '_360_is_temporary', true );
 	}
 
 	private function find_by_organization_id( string $organization_id ): int {
@@ -142,19 +220,16 @@ class Clinic_Sync {
 	/**
 	 * @param array<string,mixed> $clinic
 	 */
-	private function save_meta( int $post_id, array $clinic ): void {
-		$organization_id = sanitize_text_field( (string) ( $clinic['organization_id'] ?? '' ) );
+	private function save_meta( int $post_id, array $clinic, string $organization_id, string $temp_key ): void {
+		$organization_id = sanitize_text_field( $organization_id );
 		$bio             = wp_kses_post( (string) ( $clinic['bio'] ?? '' ) );
 
 		$meta_map = array(
-			'_360_organization_id' => $organization_id,
-			'organization_id'      => $organization_id,
 			'_360_phone'           => sanitize_text_field( (string) ( $clinic['phone'] ?? '' ) ),
 			'_360_website_url'     => esc_url_raw( (string) ( $clinic['website_url'] ?? '' ) ),
 			'_360_google_place_id' => sanitize_text_field( (string) ( $clinic['google_place_id'] ?? '' ) ),
 			'_360_assessment_id'   => sanitize_text_field( (string) ( $clinic['assessment_id'] ?? '' ) ),
 			'_360_updated_at'      => sanitize_text_field( (string) ( $clinic['updated_at'] ?? '' ) ),
-			'clinic_organization_id' => $organization_id,
 			'clinic_phone'           => sanitize_text_field( (string) ( $clinic['phone'] ?? '' ) ),
 			'clinic_bio'             => $bio,
 			'clinic_google_place_id' => sanitize_text_field( (string) ( $clinic['google_place_id'] ?? '' ) ),
@@ -170,6 +245,19 @@ class Clinic_Sync {
 
 		foreach ( $meta_map as $key => $value ) {
 			update_post_meta( $post_id, $key, $value );
+		}
+
+		update_post_meta( $post_id, '_360_temp_key', $temp_key );
+		if ( '' === $organization_id ) {
+			update_post_meta( $post_id, '_360_is_temporary', 1 );
+			delete_post_meta( $post_id, '_360_organization_id' );
+			delete_post_meta( $post_id, 'organization_id' );
+			delete_post_meta( $post_id, 'clinic_organization_id' );
+		} else {
+			update_post_meta( $post_id, '_360_organization_id', $organization_id );
+			update_post_meta( $post_id, 'organization_id', $organization_id );
+			update_post_meta( $post_id, 'clinic_organization_id', $organization_id );
+			delete_post_meta( $post_id, '_360_is_temporary' );
 		}
 
 		if ( isset( $clinic['addresses'] ) ) {
@@ -414,5 +502,14 @@ class Clinic_Sync {
 		}
 
 		return '';
+	}
+
+	private function build_temp_key( string $entity, string $site_slug, string $name, string $secondary ): string {
+		return md5(
+			strtolower( trim( $entity ) ) . '|' .
+			strtolower( trim( $site_slug ) ) . '|' .
+			strtolower( trim( $name ) ) . '|' .
+			strtolower( trim( $secondary ) )
+		);
 	}
 }

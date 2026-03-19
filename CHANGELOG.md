@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+- Added temporary record support for clinics without `organization_id` and doctors without `doctor_slug`
+- Implemented temp-key matching and automatic upgrade path when permanent IDs become available
+- Added duplicate prevention across permanent-key and temp-key matching paths
+- Converted missing-ID handling from sync errors to warnings
+- Added admin edit-screen indicator for temporary records
+
 ## 1.1.2
 - Added payload-shape compatibility for clinic records nested under `clinic`/`details`
 - Added organization ID key fallbacks (`organizationId`, `org_id`, nested `organization.id`)

@@ -155,8 +155,10 @@ class Cron {
 		$doctor_result = $doctor_sync->sync( $clinics, $last_sync, $dry_run );
 		$clinic_errors = is_array( $clinic_result['errors'] ?? null ) ? $clinic_result['errors'] : array();
 		$doctor_errors = is_array( $doctor_result['errors'] ?? null ) ? $doctor_result['errors'] : array();
+		$clinic_warnings = is_array( $clinic_result['warnings'] ?? null ) ? $clinic_result['warnings'] : array();
+		$doctor_warnings = is_array( $doctor_result['warnings'] ?? null ) ? $doctor_result['warnings'] : array();
 		$all_errors    = array_merge( $clinic_errors, $doctor_errors );
-		$warnings      = $api_client->get_runtime_warnings();
+		$warnings      = array_merge( $api_client->get_runtime_warnings(), $clinic_warnings, $doctor_warnings );
 
 		if ( $dry_run ) {
 			$warnings[] = 'Dry run mode enabled: no posts, meta, or images were written.';

@@ -33,10 +33,22 @@ class Settings_Page {
 		if ( ! $is_supported_screen || ! $is_supported_type ) {
 			return;
 		}
+
+		$post_id = 0;
+		if ( isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$post_id = absint( wp_unslash( $_GET['post'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+
+		$is_temporary = $post_id > 0 ? (bool) get_post_meta( $post_id, '_360_is_temporary', true ) : false;
 		?>
 		<div class="notice notice-warning">
 			<p><strong>⚠</strong> <?php esc_html_e( 'This content is managed by the 360 API Sync system. Manual changes may be overwritten.', '360-api-sync' ); ?></p>
 		</div>
+		<?php if ( $is_temporary ) : ?>
+			<div class="notice notice-info">
+				<p><?php esc_html_e( 'This record is temporary and will be updated when full data is available.', '360-api-sync' ); ?></p>
+			</div>
+		<?php endif; ?>
 		<?php
 	}
 

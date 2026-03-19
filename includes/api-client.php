@@ -181,67 +181,7 @@ class Api_Client {
 			return new \WP_Error( '360_api_sync_unexpected_payload', __( 'API response must include a clinics array.', '360-api-sync' ) );
 		}
 
-		$original_count = count( $data['clinics'] );
-		$filtered       = array_values(
-			array_filter(
-				$data['clinics'],
-				array( $this, 'clinic_has_organization_id' )
-			)
-		);
-
-		$filtered_count = count( $filtered );
-		if ( $filtered_count < $original_count ) {
-			$this->runtime_warnings[] = sprintf(
-				'Filtered %1$d clinic rows missing organization_id (kept %2$d of %3$d).',
-				$original_count - $filtered_count,
-				$filtered_count,
-				$original_count
-			);
-		}
-
-		$data['clinics'] = $filtered;
-
 		return $data;
-	}
-
-	/**
-	 * @param mixed $clinic
-	 */
-	private function clinic_has_organization_id( $clinic ): bool {
-		if ( ! is_array( $clinic ) ) {
-			return false;
-		}
-
-		$candidates = array(
-			$clinic['organization_id'] ?? '',
-			$clinic['organizationId'] ?? '',
-			$clinic['organizationID'] ?? '',
-			$clinic['clinic_organization_id'] ?? '',
-			$clinic['org_id'] ?? '',
-		);
-
-		if ( isset( $clinic['organization'] ) ) {
-			if ( is_scalar( $clinic['organization'] ) ) {
-				$candidates[] = $clinic['organization'];
-			} elseif ( is_array( $clinic['organization'] ) ) {
-				$candidates[] = $clinic['organization']['id'] ?? '';
-				$candidates[] = $clinic['organization']['organization_id'] ?? '';
-			}
-		}
-
-		if ( isset( $clinic['clinic'] ) && is_array( $clinic['clinic'] ) ) {
-			$candidates[] = $clinic['clinic']['organization_id'] ?? '';
-			$candidates[] = $clinic['clinic']['organizationId'] ?? '';
-		}
-
-		foreach ( $candidates as $candidate ) {
-			$value = sanitize_text_field( (string) $candidate );
-			if ( '' !== $value ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**

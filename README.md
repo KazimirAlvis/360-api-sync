@@ -98,6 +98,13 @@ Doctor identity key: `doctor_slug` (with legacy fallback to `doctor_id` when pre
     - does **not** write posts, meta, images, or advance `360_api_last_sync`
 - Useful for validating API changes safely before live writes.
 
+## Temporary Records Handling
+
+- Clinics without `organization_id` and doctors without `doctor_slug` are created as temporary records.
+- Temporary records are marked with `_360_is_temporary = 1` and a deterministic `_360_temp_key`.
+- On later syncs, when permanent IDs become available, temporary records are upgraded instead of creating duplicates.
+- Missing IDs are treated as warnings (not fatal sync errors) unless a record is missing both identity and display fields.
+
 Database log table:
 
 - `wp_360_api_sync_log`
@@ -123,7 +130,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.1.2`
+- Version: `1.2.0`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:
