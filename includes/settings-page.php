@@ -165,6 +165,7 @@ class Settings_Page {
 
 		$last_run = get_option( '360_api_sync_last_run_result', array() );
 		$last_sync_time = (string) get_option( Cron::LAST_SYNC_OPTION, '' );
+		$temporary_counts = self::get_temporary_counts();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( '360 API Sync', '360-api-sync' ); ?></h1>
@@ -226,6 +227,13 @@ class Settings_Page {
 			<p>
 				<strong><?php esc_html_e( 'Last Sync Time:', '360-api-sync' ); ?></strong>
 				<?php echo ! empty( $last_sync_time ) ? esc_html( $last_sync_time ) : esc_html__( 'Not synced yet', '360-api-sync' ); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e( 'Temporary Clinics:', '360-api-sync' ); ?></strong>
+				<?php echo esc_html( (string) (int) ( $temporary_counts['clinic'] ?? 0 ) ); ?>
+				&nbsp;|&nbsp;
+				<strong><?php esc_html_e( 'Temporary Doctors:', '360-api-sync' ); ?></strong>
+				<?php echo esc_html( (string) (int) ( $temporary_counts['doctor'] ?? 0 ) ); ?>
 			</p>
 
 			<hr />
@@ -314,5 +322,38 @@ class Settings_Page {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * @return array<string,int>
+	 */
+	private static function get_temporary_counts(): array {
+		$counts = array(
+			'clinic' => 0,
+			'doctor' => 0,
+		);
+
+		foreach ( array( 'clinic', 'doctor' ) as $post_type ) {
+			$query = new \WP_Query(
+				array(
+					'post_type'      => $post_type,
+					'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+					'no_found_rows'  => false,
+					'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						array(
+							'key'     => '_360_is_temporary',
+							'value'   => '1',
+							'compare' => '=',
+						),
+					),
+				)
+			);
+
+			$counts[ $post_type ] = (int) $query->found_posts;
+		}
+
+		return $counts;
 	}
 }

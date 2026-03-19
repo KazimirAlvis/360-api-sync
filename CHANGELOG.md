@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+- Added temporary-record counts widget on settings page (clinics/doctors)
+- Improved visibility for data-quality backlog during sync rollout
+
 ## 1.2.0
 - Added temporary record support for clinics without `organization_id` and doctors without `doctor_slug`
 - Implemented temp-key matching and automatic upgrade path when permanent IDs become available
