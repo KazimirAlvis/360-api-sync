@@ -1,10 +1,23 @@
 # Changelog
 
+## 1.3.0
+
+- Added clinic/doctor active-state handling (`is_active`, `published`, `status`) to sync publish/draft state from API.
+- Added cleanup pass to draft stale temporary clinics no longer present in API payload.
+- Added cleanup pass to draft doctors missing from API payload.
+- Strengthened duplicate doctor protection when names/slugs collide within the same sync run.
+- Switched doctor identity matching to strict `doctor_id` when available and improved compatibility for legacy records.
+- Fixed doctor image collisions by including post ID in generated media filenames.
+- Improved manual sync behavior to bypass cursor filtering and force full reconciliation.
+- Expanded clinic address normalization and coordinate extraction to support additional payload shapes.
+
 ## 1.2.1
+
 - Added temporary-record counts widget on settings page (clinics/doctors)
 - Improved visibility for data-quality backlog during sync rollout
 
 ## 1.2.0
+
 - Added temporary record support for clinics without `organization_id` and doctors without `doctor_slug`
 - Implemented temp-key matching and automatic upgrade path when permanent IDs become available
 - Added duplicate prevention across permanent-key and temp-key matching paths
@@ -12,12 +25,14 @@
 - Added admin edit-screen indicator for temporary records
 
 ## 1.1.2
+
 - Added payload-shape compatibility for clinic records nested under `clinic`/`details`
 - Added organization ID key fallbacks (`organizationId`, `org_id`, nested `organization.id`)
 - Added doctor payload compatibility for `providers`, `slug`, and alternate name fields
 - Fixed dry-run false negatives caused by missing `organization_id` in variant payloads
 
 ## 1.1.1
+
 - Added temporary bearer-header fallback (x-api-key remains primary)
 - Added runtime warning logging when bearer fallback is used
 - Added payload safety guard for unusually large clinic responses (>2000)
@@ -25,13 +40,16 @@
 - Prevented last-sync cursor updates during dry-run mode
 
 ## 1.1.0
+
 - Integrated PR360 production API
 - Switched to /sync endpoint
 - Nested doctor processing
 - x-api-key authentication
 
 ## 1.0.0
+
 Initial release
+
 - PR360 API integration
 - Clinic and doctor sync
 - Image import

@@ -25,7 +25,12 @@ class Image_Importer {
 
 	public static function import_doctor_photo( string $image_url, string $organization_id, string $doctor_slug, int $post_id ) {
 		$extension = self::get_extension_from_url( $image_url );
-		$file_name = 'doctor-' . sanitize_file_name( $doctor_slug ) . '.' . $extension;
+		$slug_part = sanitize_file_name( $doctor_slug );
+		if ( '' === $slug_part ) {
+			$slug_part = 'doctor';
+		}
+
+		$file_name = 'doctor-' . $slug_part . '-' . (int) $post_id . '.' . $extension;
 		$subdir    = '360-doctors/' . sanitize_file_name( $organization_id );
 
 		return self::import_image(
@@ -57,7 +62,11 @@ class Image_Importer {
 		$existing_url = (string) get_post_meta( $post_id, $source_url_meta_key, true );
 		$existing_id  = (int) get_post_meta( $post_id, $attachment_id_meta_key, true );
 		if ( $existing_url === $image_url && $existing_id > 0 && get_post( $existing_id ) ) {
-			return $existing_id;
+			$existing_file = get_attached_file( $existing_id );
+			$expected_name = sanitize_file_name( $file_name );
+			if ( is_string( $existing_file ) && '' !== $existing_file && file_exists( $existing_file ) && basename( $existing_file ) === $expected_name ) {
+				return $existing_id;
+			}
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';

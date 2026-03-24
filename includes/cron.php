@@ -61,6 +61,8 @@ class Cron {
 		$dry_run     = ! empty( $settings['enable_dry_run'] );
 
 		$last_sync = (string) get_option( self::LAST_SYNC_OPTION, '' );
+		$force_full_sync = ( 'manual' === $context );
+		$effective_last_sync = $force_full_sync ? '' : $last_sync;
 
 		$payload = $api_client->get_sync_payload();
 		if ( is_wp_error( $payload ) ) {
@@ -151,8 +153,8 @@ class Cron {
 			return $result;
 		}
 
-		$clinic_result = $clinic_sync->sync( $clinics, $last_sync, $dry_run );
-		$doctor_result = $doctor_sync->sync( $clinics, $last_sync, $dry_run );
+		$clinic_result = $clinic_sync->sync( $clinics, $effective_last_sync, $dry_run );
+		$doctor_result = $doctor_sync->sync( $clinics, $effective_last_sync, $dry_run );
 		$clinic_errors = is_array( $clinic_result['errors'] ?? null ) ? $clinic_result['errors'] : array();
 		$doctor_errors = is_array( $doctor_result['errors'] ?? null ) ? $doctor_result['errors'] : array();
 		$clinic_warnings = is_array( $clinic_result['warnings'] ?? null ) ? $clinic_result['warnings'] : array();
@@ -162,6 +164,10 @@ class Cron {
 
 		if ( $dry_run ) {
 			$warnings[] = 'Dry run mode enabled: no posts, meta, or images were written.';
+		}
+
+		if ( $force_full_sync ) {
+			$warnings[] = 'Manual sync ran in full mode (cursor bypassed) to ensure updates are applied even when updated_at is unchanged.';
 		}
 
 		$log_messages = array_merge( $all_errors, $warnings );

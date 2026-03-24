@@ -62,7 +62,7 @@ Clinic identity key: `organization_id`
     - `clinic_reviews`
     - `google_place_id`
 
-Doctor identity key: `doctor_slug` (with legacy fallback to `doctor_id` when present)
+Doctor identity key: `doctor_id` (with `doctor_slug` used for URL/temporary compatibility)
 
 - Updates post + metadata including:
     - `doctor_name`
@@ -105,6 +105,13 @@ Doctor identity key: `doctor_slug` (with legacy fallback to `doctor_id` when pre
 - On later syncs, when permanent IDs become available, temporary records are upgraded instead of creating duplicates.
 - Missing IDs are treated as warnings (not fatal sync errors) unless a record is missing both identity and display fields.
 
+## Publish / Draft Lifecycle Sync
+
+- Clinics and doctors are drafted when API marks them inactive via `is_active`, `published`, or `status`.
+- Doctors missing from the latest API payload are drafted during cleanup.
+- Temporary clinic records missing from the latest payload are drafted during cleanup.
+- Manual sync runs in full-reconciliation mode (cursor bypass) to apply lifecycle updates immediately.
+
 Database log table:
 
 - `wp_360_api_sync_log`
@@ -130,7 +137,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.2.1`
+- Version: `1.3.0`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:
