@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+- Prefilled settings `API Base URL` with the PR360 Supabase Functions endpoint by default.
+- Added fallback normalization so an empty saved base URL automatically reverts to the default endpoint.
+
 ## 1.3.0
 
 - Added clinic/doctor active-state handling (`is_active`, `published`, `status`) to sync publish/draft state from API.

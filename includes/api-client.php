@@ -7,6 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Api_Client {
+	private const DEFAULT_API_BASE_URL = 'https://cmltutizsixpurslzfzl.supabase.co/functions/v1';
+
 	/**
 	 * @var array<int,string>
 	 */
@@ -17,7 +19,7 @@ class Api_Client {
 	 */
 	public static function get_settings(): array {
 		$defaults = array(
-			'api_base_url' => '',
+			'api_base_url' => self::DEFAULT_API_BASE_URL,
 			'api_key'      => '',
 			'site_slug'    => '',
 			'enable_mock'  => 1,
@@ -32,6 +34,9 @@ class Api_Client {
 		$settings = wp_parse_args( $settings, $defaults );
 
 		$settings['api_base_url'] = esc_url_raw( (string) $settings['api_base_url'] );
+		if ( '' === $settings['api_base_url'] ) {
+			$settings['api_base_url'] = self::DEFAULT_API_BASE_URL;
+		}
 		$settings['api_key']      = sanitize_text_field( (string) $settings['api_key'] );
 		$settings['site_slug']    = sanitize_title( (string) $settings['site_slug'] );
 		$settings['enable_mock']  = ! empty( $settings['enable_mock'] ) ? 1 : 0;

@@ -93,6 +93,8 @@ class Settings_Page {
 	}
 
 	public static function register_settings(): void {
+		$default_api_base_url = 'https://cmltutizsixpurslzfzl.supabase.co/functions/v1';
+
 		register_setting(
 			'360_api_sync_settings_group',
 			'360_api_sync_settings',
@@ -100,7 +102,7 @@ class Settings_Page {
 				'type'              => 'array',
 				'sanitize_callback' => array( __CLASS__, 'sanitize_settings' ),
 				'default'           => array(
-					'api_base_url' => '',
+					'api_base_url' => $default_api_base_url,
 					'api_key'      => '',
 					'site_slug'    => '',
 					'enable_mock'  => 1,
@@ -115,8 +117,14 @@ class Settings_Page {
 	 * @return array<string,mixed>
 	 */
 	public static function sanitize_settings( array $input ): array {
+		$default_api_base_url = 'https://cmltutizsixpurslzfzl.supabase.co/functions/v1';
+		$api_base_url         = esc_url_raw( (string) ( $input['api_base_url'] ?? '' ) );
+		if ( '' === $api_base_url ) {
+			$api_base_url = $default_api_base_url;
+		}
+
 		return array(
-			'api_base_url' => esc_url_raw( (string) ( $input['api_base_url'] ?? '' ) ),
+			'api_base_url' => $api_base_url,
 			'api_key'      => sanitize_text_field( (string) ( $input['api_key'] ?? '' ) ),
 			'site_slug'    => sanitize_title( (string) ( $input['site_slug'] ?? '' ) ),
 			'enable_mock'  => ! empty( $input['enable_mock'] ) ? 1 : 0,
