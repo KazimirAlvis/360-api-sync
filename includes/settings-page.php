@@ -13,6 +13,7 @@ class Settings_Page {
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_managed_content_notice' ) );
 		add_action( 'admin_post_360_api_sync_manual', array( __CLASS__, 'handle_manual_sync' ) );
+		add_action( 'admin_post_360_api_sync_check_updates', array( __CLASS__, 'handle_check_updates' ) );
 		add_action( 'admin_post_360_api_sync_clear_log', array( __CLASS__, 'handle_clear_log' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( THREESIXTY_API_SYNC_PATH . '360-api-sync.php' ), array( __CLASS__, 'settings_link' ) );
 	}
@@ -104,6 +105,7 @@ class Settings_Page {
 				'default'           => array(
 					'api_base_url' => $default_api_base_url,
 					'api_key'      => '',
+					'github_token' => '',
 					'site_slug'    => '',
 					'enable_mock'  => 1,
 					'enable_dry_run' => 0,
@@ -126,10 +128,30 @@ class Settings_Page {
 		return array(
 			'api_base_url' => $api_base_url,
 			'api_key'      => sanitize_text_field( (string) ( $input['api_key'] ?? '' ) ),
+			'github_token' => sanitize_text_field( (string) ( $input['github_token'] ?? '' ) ),
 			'site_slug'    => sanitize_title( (string) ( $input['site_slug'] ?? '' ) ),
 			'enable_mock'  => ! empty( $input['enable_mock'] ) ? 1 : 0,
 			'enable_dry_run' => ! empty( $input['enable_dry_run'] ) ? 1 : 0,
 		);
+	}
+
+	public static function handle_check_updates(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to check plugin updates.', '360-api-sync' ) );
+		}
+
+		check_admin_referer( '360_api_sync_check_updates_action', '360_api_sync_check_updates_nonce' );
+
+		delete_site_transient( 'update_plugins' );
+		if ( function_exists( 'wp_clean_plugins_cache' ) ) {
+			wp_clean_plugins_cache( true );
+		}
+		wp_update_plugins();
+
+		set_transient( '360_api_sync_update_check_result', 'ok', 60 );
+
+		wp_safe_redirect( admin_url( 'admin.php?page=360-api-sync' ) );
+		exit;
 	}
 
 	public static function handle_manual_sync(): void {
@@ -171,6 +193,11 @@ class Settings_Page {
 			delete_transient( '360_api_sync_manual_result' );
 		}
 
+		$update_check_result = get_transient( '360_api_sync_update_check_result' );
+		if ( false !== $update_check_result ) {
+			delete_transient( '360_api_sync_update_check_result' );
+		}
+
 		$last_run = get_option( '360_api_sync_last_run_result', array() );
 		$last_sync_time = (string) get_option( Cron::LAST_SYNC_OPTION, '' );
 		$temporary_counts = self::get_temporary_counts();
@@ -186,6 +213,10 @@ class Settings_Page {
 				<?php endif; ?>
 			<?php endif; ?>
 
+			<?php if ( false !== $update_check_result ) : ?>
+				<div class="notice notice-info is-dismissible"><p><?php esc_html_e( 'Plugin update check requested. Refresh the Plugins or Updates page in a few seconds.', '360-api-sync' ); ?></p></div>
+			<?php endif; ?>
+
 			<form method="post" action="options.php">
 				<?php settings_fields( '360_api_sync_settings_group' ); ?>
 				<table class="form-table" role="presentation">
@@ -199,6 +230,13 @@ class Settings_Page {
 						<th scope="row"><label for="360_api_sync_api_key"><?php esc_html_e( 'API Key', '360-api-sync' ); ?></label></th>
 						<td>
 							<input name="360_api_sync_settings[api_key]" id="360_api_sync_api_key" type="text" class="regular-text" value="<?php echo esc_attr( (string) $settings['api_key'] ); ?>" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="360_api_sync_github_token"><?php esc_html_e( 'GitHub Token (updates)', '360-api-sync' ); ?></label></th>
+						<td>
+							<input name="360_api_sync_settings[github_token]" id="360_api_sync_github_token" type="password" class="regular-text" value="<?php echo esc_attr( (string) ( $settings['github_token'] ?? '' ) ); ?>" autocomplete="off" />
+							<p class="description"><?php esc_html_e( 'Needed on live servers when the plugin repository is private.', '360-api-sync' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -252,6 +290,14 @@ class Settings_Page {
 				<input type="hidden" name="action" value="360_api_sync_manual" />
 				<?php wp_nonce_field( '360_api_sync_manual_action', '360_api_sync_manual_nonce' ); ?>
 				<?php submit_button( __( 'Run Manual Sync', '360-api-sync' ), 'secondary', 'submit', false ); ?>
+			</form>
+
+			<h2><?php esc_html_e( 'Plugin Updates', '360-api-sync' ); ?></h2>
+			<p><?php esc_html_e( 'Force-refresh plugin update metadata from GitHub.', '360-api-sync' ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="360_api_sync_check_updates" />
+				<?php wp_nonce_field( '360_api_sync_check_updates_action', '360_api_sync_check_updates_nonce' ); ?>
+				<?php submit_button( __( 'Check for Plugin Updates', '360-api-sync' ), 'secondary', 'submit', false ); ?>
 			</form>
 
 			<?php if ( is_array( $last_run ) && ! empty( $last_run ) ) : ?>

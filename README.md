@@ -20,6 +20,7 @@ Settings page fields:
 
 - API Base URL
 - API Key
+- GitHub Token (optional, for private-repo plugin updates)
 - Site Slug
 - Enable Mock API
 - Dry Run Mode
@@ -137,7 +138,7 @@ Updater tracks branch `main` and enables GitHub release assets.
 
 ## Development
 
-- Version: `1.3.3`
+- Version: `1.3.4`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:

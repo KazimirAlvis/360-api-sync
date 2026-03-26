@@ -21,6 +21,7 @@ class Api_Client {
 		$defaults = array(
 			'api_base_url' => self::DEFAULT_API_BASE_URL,
 			'api_key'      => '',
+			'github_token' => '',
 			'site_slug'    => '',
 			'enable_mock'  => 1,
 			'enable_dry_run' => 0,
@@ -38,6 +39,7 @@ class Api_Client {
 			$settings['api_base_url'] = self::DEFAULT_API_BASE_URL;
 		}
 		$settings['api_key']      = sanitize_text_field( (string) $settings['api_key'] );
+		$settings['github_token'] = sanitize_text_field( (string) $settings['github_token'] );
 		$settings['site_slug']    = sanitize_title( (string) $settings['site_slug'] );
 		$settings['enable_mock']  = ! empty( $settings['enable_mock'] ) ? 1 : 0;
 		$settings['enable_dry_run'] = ! empty( $settings['enable_dry_run'] ) ? 1 : 0;

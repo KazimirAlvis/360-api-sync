@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.4
+
+- Added optional GitHub token field in plugin settings for private-repo update checks on live servers.
+- Added admin action button to force-refresh plugin update metadata from GitHub.
+- Added updater fallback to read `github_token` from saved plugin settings when constant/filter token is not provided.
+
 ## 1.3.3
 
 - Switched GitHub updater to branch-based metadata (main) instead of release-assets mode.

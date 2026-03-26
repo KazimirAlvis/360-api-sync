@@ -3,7 +3,7 @@
  * Plugin Name: 360 API Sync
  * Plugin URI: https://github.com/KazimirAlvis/360-api-sync
  * Description: Synchronizes clinic and doctor data from the PR360 API into WordPress custom post types used by the 360 medical site network.
- * Version: 1.3.3
+ * Version: 1.3.4
  * Author: PR360
  * License: GPL2+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'API360_SYNC_VERSION', '1.3.3' );
+define( 'API360_SYNC_VERSION', '1.3.4' );
 define( 'THREESIXTY_API_SYNC_VERSION', API360_SYNC_VERSION );
 define( 'THREESIXTY_API_SYNC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'THREESIXTY_API_SYNC_URL', plugin_dir_url( __FILE__ ) );
@@ -34,6 +34,12 @@ $api360_update_checker->setBranch( 'main' );
 
 $api360_github_token = defined( 'API360_SYNC_GITHUB_TOKEN' ) ? (string) constant( 'API360_SYNC_GITHUB_TOKEN' ) : '';
 $api360_github_token = apply_filters( 'api360_sync_github_token', $api360_github_token );
+if ( '' === trim( (string) $api360_github_token ) ) {
+	$api360_settings = get_option( '360_api_sync_settings', array() );
+	if ( is_array( $api360_settings ) ) {
+		$api360_github_token = (string) ( $api360_settings['github_token'] ?? '' );
+	}
+}
 if ( ! empty( $api360_github_token ) && method_exists( $api360_update_checker, 'setAuthentication' ) ) {
 	$api360_update_checker->setAuthentication( sanitize_text_field( (string) $api360_github_token ) );
 }
