@@ -120,25 +120,22 @@ Database log table:
 
 ## GitHub Update System
 
-This plugin uses YahnisElsts Plugin Update Checker (v5.6) with GitHub source:
+This plugin uses a manifest-based GitHub updater:
 
 - https://github.com/KazimirAlvis/360-api-sync
+- https://raw.githubusercontent.com/KazimirAlvis/360-api-sync/main/plugin-manifest.json
 
-Private repository support:
+Release workflow:
 
-- define token in `wp-config.php`:
+- Update version in `360-api-sync.php`, `README.md`, `CHANGELOG.md`, and `plugin-manifest.json`.
+- Push to `main`.
+- In WordPress admin, click **Check for Plugin Updates** on the plugin settings page.
 
-    `define('API360_SYNC_GITHUB_TOKEN', 'your_token_here');`
-
-- or filter it:
-
-    `add_filter('api360_sync_github_token', fn() => 'your_token_here');`
-
-Updater tracks branch `main` and enables GitHub release assets.
+No token UI or `wp-config.php` token is required when manifest + ZIP URLs are publicly accessible.
 
 ## Development
 
-- Version: `1.3.4`
+- Version: `1.4.0`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:

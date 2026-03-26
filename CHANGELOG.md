@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Replaced GitHub Plugin Update Checker dependency with a manifest-based updater that matches the 360 Global Blocks workflow.
+- Added `plugin-manifest.json` and updater integration for plugin info + update checks from the main-branch ZIP.
+- Added package-folder rename handling during update so WordPress keeps the `360-api-sync` plugin directory stable.
+
 ## 1.3.4
 
 - Added optional GitHub token field in plugin settings for private-repo update checks on live servers.

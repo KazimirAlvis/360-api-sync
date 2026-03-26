@@ -1,0 +1,18 @@
+{
+	"name": "360 API Sync",
+	"slug": "360-api-sync",
+	"version": "1.4.0",
+	"download_url": "https://github.com/KazimirAlvis/360-api-sync/archive/refs/heads/main.zip",
+	"requires": "6.0",
+	"tested": "6.9",
+	"requires_php": "7.4",
+	"last_updated": "2026-03-26 00:00:00",
+	"author": "<a href='https://github.com/KazimirAlvis'>PR360</a>",
+	"author_profile": "https://github.com/KazimirAlvis",
+	"homepage": "https://github.com/KazimirAlvis/360-api-sync",
+	"sections": {
+		"description": "<p>Synchronizes clinic and doctor data from the PR360 API into WordPress clinic and doctor post types used by the 360 medical site network.</p>",
+		"installation": "<ol><li>Upload the plugin folder to <code>/wp-content/plugins/360-api-sync/</code> or install via Plugins \u2192 Add New \u2192 Upload Plugin.</li><li>Activate the plugin.</li><li>Open <strong>360 API Sync \u2192 Settings</strong>, configure API fields, and run manual sync.</li></ol>",
+		"changelog": "<h4>1.4.0</h4><ul><li>Switched to a manifest-based GitHub updater (main branch ZIP) to match the 360 blocks updater pattern.</li><li>Added in-plugin updater integration that provides plugin information and update responses from <code>plugin-manifest.json</code>.</li><li>Added package-folder rename handling during update to preserve the <code>360-api-sync</code> plugin directory.</li></ul>"
+	}
+}

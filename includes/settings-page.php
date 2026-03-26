@@ -105,7 +105,6 @@ class Settings_Page {
 				'default'           => array(
 					'api_base_url' => $default_api_base_url,
 					'api_key'      => '',
-					'github_token' => '',
 					'site_slug'    => '',
 					'enable_mock'  => 1,
 					'enable_dry_run' => 0,
@@ -128,7 +127,6 @@ class Settings_Page {
 		return array(
 			'api_base_url' => $api_base_url,
 			'api_key'      => sanitize_text_field( (string) ( $input['api_key'] ?? '' ) ),
-			'github_token' => sanitize_text_field( (string) ( $input['github_token'] ?? '' ) ),
 			'site_slug'    => sanitize_title( (string) ( $input['site_slug'] ?? '' ) ),
 			'enable_mock'  => ! empty( $input['enable_mock'] ) ? 1 : 0,
 			'enable_dry_run' => ! empty( $input['enable_dry_run'] ) ? 1 : 0,
@@ -230,13 +228,6 @@ class Settings_Page {
 						<th scope="row"><label for="360_api_sync_api_key"><?php esc_html_e( 'API Key', '360-api-sync' ); ?></label></th>
 						<td>
 							<input name="360_api_sync_settings[api_key]" id="360_api_sync_api_key" type="text" class="regular-text" value="<?php echo esc_attr( (string) $settings['api_key'] ); ?>" />
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="360_api_sync_github_token"><?php esc_html_e( 'GitHub Token (updates)', '360-api-sync' ); ?></label></th>
-						<td>
-							<input name="360_api_sync_settings[github_token]" id="360_api_sync_github_token" type="password" class="regular-text" value="<?php echo esc_attr( (string) ( $settings['github_token'] ?? '' ) ); ?>" autocomplete="off" />
-							<p class="description"><?php esc_html_e( 'Needed on live servers when the plugin repository is private.', '360-api-sync' ); ?></p>
 						</td>
 					</tr>
 					<tr>
