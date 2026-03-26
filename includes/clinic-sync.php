@@ -46,6 +46,7 @@ class Clinic_Sync {
 			$organization_id = $this->resolve_organization_id( $clinic );
 			$clinic_name     = $this->resolve_clinic_name( $clinic );
 			$phone           = $this->resolve_phone( $clinic );
+			$phone_for_key   = $this->normalize_phone_for_key( $phone );
 			$clinic['clinic_name'] = $clinic_name;
 			$clinic['phone']       = $phone;
 
@@ -58,7 +59,7 @@ class Clinic_Sync {
 
 			$results['valid_clinics']++;
 
-			$temp_key = $this->build_temp_key( 'clinic', $site_slug, $clinic_name, $phone );
+			$temp_key = $this->build_temp_key( 'clinic', $site_slug, $clinic_name, $phone_for_key );
 			$is_temporary_input = '' === $organization_id;
 			$clinic['organization_id'] = $organization_id;
 			if ( '' !== $temp_key ) {
@@ -72,6 +73,10 @@ class Clinic_Sync {
 
 			if ( $post_id <= 0 && '' !== $temp_key ) {
 				$post_id = $this->find_by_temp_key( $temp_key );
+			}
+
+			if ( $post_id <= 0 && $is_temporary_input && '' !== $clinic_name ) {
+				$post_id = $this->find_temporary_by_name( $clinic_name );
 			}
 
 			$clinic_is_active = $this->is_api_clinic_active( $clinic );
@@ -1166,6 +1171,52 @@ class Clinic_Sync {
 			strtolower( trim( $name ) ) . '|' .
 			strtolower( trim( $secondary ) )
 		);
+	}
+
+	private function normalize_phone_for_key( string $phone ): string {
+		$digits_only = preg_replace( '/\D+/', '', $phone );
+		if ( ! is_string( $digits_only ) ) {
+			return '';
+		}
+
+		if ( '' === $digits_only ) {
+			return '';
+		}
+
+		if ( strlen( $digits_only ) > 10 ) {
+			$digits_only = substr( $digits_only, -10 );
+		}
+
+		return $digits_only;
+	}
+
+	private function find_temporary_by_name( string $clinic_name ): int {
+		$clinic_name = sanitize_text_field( $clinic_name );
+		if ( '' === $clinic_name ) {
+			return 0;
+		}
+
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'clinic',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'title'          => $clinic_name,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'   => '_360_is_temporary',
+						'value' => '1',
+					),
+				),
+			)
+		);
+
+		if ( empty( $query->posts ) ) {
+			return 0;
+		}
+
+		return (int) $query->posts[0];
 	}
 
 	/**

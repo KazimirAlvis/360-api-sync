@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Reduced duplicate temporary clinic creation by normalizing phone values used in temporary key generation.
+- Added fallback matching for temporary clinics by clinic name when `organization_id` is missing.
+
 ## 1.3.1
 
 - Prefilled settings `API Base URL` with the PR360 Supabase Functions endpoint by default.
