@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.3
+
+- Switched GitHub updater to branch-based metadata (main) instead of release-assets mode.
+- Improves update detection in live WordPress admin when changes are pushed without creating a GitHub Release.
+
 ## 1.3.2
 
 - Reduced duplicate temporary clinic creation by normalizing phone values used in temporary key generation.
