@@ -1,7 +1,7 @@
 {
 	"name": "360 API Sync",
 	"slug": "360-api-sync",
-	"version": "1.4.0",
+	"version": "1.4.1",
 	"download_url": "https://github.com/KazimirAlvis/360-api-sync/archive/refs/heads/main.zip",
 	"requires": "6.0",
 	"tested": "6.9",
@@ -13,6 +13,6 @@
 	"sections": {
 		"description": "<p>Synchronizes clinic and doctor data from the PR360 API into WordPress clinic and doctor post types used by the 360 medical site network.</p>",
 		"installation": "<ol><li>Upload the plugin folder to <code>/wp-content/plugins/360-api-sync/</code> or install via Plugins \u2192 Add New \u2192 Upload Plugin.</li><li>Activate the plugin.</li><li>Open <strong>360 API Sync \u2192 Settings</strong>, configure API fields, and run manual sync.</li></ol>",
-		"changelog": "<h4>1.4.0</h4><ul><li>Switched to a manifest-based GitHub updater (main branch ZIP) to match the 360 blocks updater pattern.</li><li>Added in-plugin updater integration that provides plugin information and update responses from <code>plugin-manifest.json</code>.</li><li>Added package-folder rename handling during update to preserve the <code>360-api-sync</code> plugin directory.</li></ul>"
+		"changelog": "<h4>1.4.1</h4><ul><li>Removed the Enable Mock API and Dry Run Mode settings from admin to keep live behavior consistent.</li><li>Forced runtime settings to keep both mock and dry-run disabled.</li></ul><h4>1.4.0</h4><ul><li>Switched to a manifest-based GitHub updater (main branch ZIP) to match the 360 blocks updater pattern.</li><li>Added in-plugin updater integration that provides plugin information and update responses from <code>plugin-manifest.json</code>.</li><li>Added package-folder rename handling during update to preserve the <code>360-api-sync</code> plugin directory.</li></ul>"
 	}
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1
+
+- Removed the `Enable Mock API` and `Dry Run Mode` checkboxes from plugin settings.
+- Disabled mock and dry-run behavior at runtime to prevent hidden legacy settings from affecting sync behavior.
+
 ## 1.4.0
 
 - Replaced GitHub Plugin Update Checker dependency with a manifest-based updater that matches the 360 Global Blocks workflow.

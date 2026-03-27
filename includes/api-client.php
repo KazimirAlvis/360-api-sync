@@ -22,8 +22,6 @@ class Api_Client {
 			'api_base_url' => self::DEFAULT_API_BASE_URL,
 			'api_key'      => '',
 			'site_slug'    => '',
-			'enable_mock'  => 1,
-			'enable_dry_run' => 0,
 		);
 
 		$settings = get_option( '360_api_sync_settings', array() );
@@ -39,8 +37,8 @@ class Api_Client {
 		}
 		$settings['api_key']      = sanitize_text_field( (string) $settings['api_key'] );
 		$settings['site_slug']    = sanitize_title( (string) $settings['site_slug'] );
-		$settings['enable_mock']  = ! empty( $settings['enable_mock'] ) ? 1 : 0;
-		$settings['enable_dry_run'] = ! empty( $settings['enable_dry_run'] ) ? 1 : 0;
+		$settings['enable_mock']  = 0;
+		$settings['enable_dry_run'] = 0;
 
 		return $settings;
 	}
