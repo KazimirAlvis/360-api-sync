@@ -1252,14 +1252,24 @@ class Clinic_Sync {
 
 		$existing = get_post_meta( $post_id, 'clinic_addresses', true );
 		if ( is_array( $existing ) ) {
-			return empty( $existing );
+			if ( empty( $existing ) ) {
+				return true;
+			}
+
+			$normalized_existing = $this->normalize_clinic_addresses( $existing );
+
+			if ( empty( $normalized_existing ) ) {
+				return true;
+			}
+
+			return $normalized_existing !== $incoming_addresses;
 		}
 
 		if ( is_string( $existing ) ) {
-			return '' === trim( $existing );
+			return true;
 		}
 
-		return empty( $existing );
+		return true;
 	}
 
 	/**

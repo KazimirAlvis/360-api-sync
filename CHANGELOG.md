@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.6
+
+- Updated address backfill logic so unchanged clinics are reprocessed when saved `clinic_addresses` differs from normalized incoming API data.
+- Allows partial legacy addresses to be replaced with full street/city/state/zip values on sync.
+
 ## 1.4.5
 
 - Added fallback address mapping from top-level API fields (`street/city/state/zip`) into `clinic_addresses`.
