@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.3
+
+- Filtered placeholder/empty About repeater rows so unused entries no longer render on clinic pages.
+- Improved clinic info backfill detection so legacy placeholder-only values are replaced on the next sync.
+
 ## 1.4.2
 
 - Fixed image importer extension handling to preserve `.svg` files instead of forcing unsupported URLs to `.jpg`.

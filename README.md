@@ -135,7 +135,7 @@ No token UI or `wp-config.php` token is required when manifest + ZIP URLs are pu
 
 ## Development
 
-- Version: `1.4.2`
+- Version: `1.4.3`
 - Changelog: `CHANGELOG.md`
 - Main bootstrap: `360-api-sync.php`
 - Lint check:
