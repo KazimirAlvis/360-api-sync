@@ -812,14 +812,27 @@ class Clinic_Sync {
 							continue;
 						}
 
+						$fallback_value = sanitize_textarea_field( (string) $v );
+						if ( '' === $fallback_value ) {
+							continue;
+						}
+
 						$title       = sanitize_text_field( $k );
-						$description = sanitize_textarea_field( (string) $v );
+						$description = $fallback_value;
 						break;
 					}
 				}
 			}
 
 			if ( '' === $title && '' === $description ) {
+				continue;
+			}
+
+			if ( '' === $description && $this->is_placeholder_clinic_info_text( $title ) ) {
+				continue;
+			}
+
+			if ( $this->is_placeholder_clinic_info_text( $title ) && $this->is_placeholder_clinic_info_text( $description ) ) {
 				continue;
 			}
 
@@ -1269,7 +1282,13 @@ class Clinic_Sync {
 
 		$existing = get_post_meta( $post_id, 'clinic_info', true );
 		if ( is_array( $existing ) ) {
-			return empty( $existing );
+			if ( empty( $existing ) ) {
+				return true;
+			}
+
+			$normalized_existing = $this->normalize_clinic_info( $existing );
+
+			return empty( $normalized_existing );
 		}
 
 		if ( is_string( $existing ) ) {
@@ -1277,6 +1296,26 @@ class Clinic_Sync {
 		}
 
 		return empty( $existing );
+	}
+
+	private function is_placeholder_clinic_info_text( string $value ): bool {
+		$normalized = strtolower( trim( $value ) );
+
+		if ( '' === $normalized ) {
+			return false;
+		}
+
+		$placeholders = array(
+			'title',
+			'heading',
+			'label',
+			'description',
+			'text',
+			'content',
+			'value',
+		);
+
+		return in_array( $normalized, $placeholders, true );
 	}
 
 	/**
