@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.4
+
+- Fixed temporary clinic fallback matching by name to use a valid WordPress query path and exact title comparison.
+- Prevents duplicate temporary clinic creation when records are missing `organization_id` but clinic names are unchanged.
+
 ## 1.4.3
 
 - Filtered placeholder/empty About repeater rows so unused entries no longer render on clinic pages.

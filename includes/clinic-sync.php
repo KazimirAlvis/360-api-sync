@@ -1213,9 +1213,9 @@ class Clinic_Sync {
 			array(
 				'post_type'      => 'clinic',
 				'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
-				'posts_per_page' => 1,
+				'posts_per_page' => -1,
 				'fields'         => 'ids',
-				'title'          => $clinic_name,
+				's'              => $clinic_name,
 				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 					array(
 						'key'   => '_360_is_temporary',
@@ -1225,11 +1225,21 @@ class Clinic_Sync {
 			)
 		);
 
-		if ( empty( $query->posts ) ) {
-			return 0;
+		if ( ! empty( $query->posts ) ) {
+			$needle = strtolower( trim( $clinic_name ) );
+			foreach ( $query->posts as $candidate_id ) {
+				$candidate_title = get_the_title( (int) $candidate_id );
+				if ( ! is_string( $candidate_title ) || '' === $candidate_title ) {
+					continue;
+				}
+
+				if ( strtolower( trim( $candidate_title ) ) === $needle ) {
+					return (int) $candidate_id;
+				}
+			}
 		}
 
-		return (int) $query->posts[0];
+		return 0;
 	}
 
 	/**
