@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.9
+
+- Clinics missing `organization_id` are now skipped entirely instead of being created as temporary placeholder records.
+
 ## 1.4.8
 
 - Added temporary address debug logging to `error_log` to capture the exact API payload shape for address fields.

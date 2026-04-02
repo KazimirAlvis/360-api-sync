@@ -62,6 +62,17 @@ class Clinic_Sync {
 			$temp_key = $this->build_temp_key( 'clinic', $site_slug, $clinic_name, $phone_for_key );
 			$is_temporary_input = '' === $organization_id;
 			$clinic['organization_id'] = $organization_id;
+
+			// Skip clinics with no organization_id — do not create temporary records.
+			if ( $is_temporary_input ) {
+				$results['invalid_clinics']++;
+				$results['warnings'][] = sprintf(
+					'Clinic "%s" skipped — missing organization_id.',
+					'' !== $clinic_name ? $clinic_name : 'unknown'
+				);
+				continue;
+			}
+
 			if ( '' !== $temp_key ) {
 				$seen_temp_keys[ $temp_key ] = true;
 			}
