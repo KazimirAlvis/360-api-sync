@@ -1419,6 +1419,12 @@ class Clinic_Sync {
 
 			if ( ! empty( $fallback_address ) ) {
 				foreach ( $source as $index => $item ) {
+					// Convert plain string address items into an array so the
+					// fallback city/state/zip/lat/lng can be merged in.
+					if ( is_string( $item ) ) {
+						$item = array( 'street' => trim( $item ) );
+					}
+
 					if ( ! is_array( $item ) ) {
 						continue;
 					}
@@ -1450,8 +1456,19 @@ class Clinic_Sync {
 				)
 			);
 
-			if ( empty( $parts ) && ! empty( $fallback_address ) ) {
-				return array( $fallback_address );
+			if ( empty( $parts ) ) {
+				return ! empty( $fallback_address ) ? array( $fallback_address ) : array();
+			}
+
+			// Convert each string line into an array item and merge fallback fields.
+			if ( ! empty( $fallback_address ) ) {
+				$parts = array_map(
+					function ( $line ) use ( $fallback_address ) {
+						$item = array( 'street' => $line );
+						return $this->merge_address_fallback( $item, $fallback_address );
+					},
+					$parts
+				);
 			}
 
 			return $parts;

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.7
+
+- Fixed address composition when the API returns `addresses` array items as plain strings — each line is now converted to an array and merged with top-level clinic fields (city/state/zip/lat/lng) before normalization.
+- `clinic_address` and `clinic_addresses` now include full city/state/zip across all API payload shapes, resolving missing map pins on state pages.
+
 ## 1.4.6
 
 - Updated address backfill logic so unchanged clinics are reprocessed when saved `clinic_addresses` differs from normalized incoming API data.
