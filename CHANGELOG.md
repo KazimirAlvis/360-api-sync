@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.8
+
+- Added temporary address debug logging to `error_log` to capture the exact API payload shape for address fields.
+
 ## 1.4.7
 
 - Fixed address composition when the API returns `addresses` array items as plain strings — each line is now converted to an array and merged with top-level clinic fields (city/state/zip/lat/lng) before normalization.

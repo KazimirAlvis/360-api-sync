@@ -1410,6 +1410,17 @@ class Clinic_Sync {
 	 * @return array<int|string,mixed>
 	 */
 	private function collect_raw_addresses( array $clinic ): array {
+		// DEBUG: log raw address fields from API payload — remove after confirming.
+		$debug_keys = array( 'clinic_addresses', 'addresses', 'street', 'line1', 'city', 'state', 'zip', 'lat', 'lng', 'latitude', 'longitude' );
+		$debug_data = array();
+		foreach ( $debug_keys as $k ) {
+			if ( array_key_exists( $k, $clinic ) ) {
+				$debug_data[ $k ] = $clinic[ $k ];
+			}
+		}
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions
+		error_log( '[360-api-sync] address debug for "' . ( $clinic['clinic_name'] ?? $clinic['name'] ?? 'unknown' ) . '": ' . wp_json_encode( $debug_data ) );
+
 		$source = $clinic['clinic_addresses'] ?? ( $clinic['addresses'] ?? array() );
 		$fallback_address = $this->build_fallback_address_from_clinic( $clinic );
 		if ( is_array( $source ) ) {
