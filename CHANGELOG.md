@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.5
+
+- Added fallback address mapping from top-level API fields (`street/city/state/zip`) into `clinic_addresses`.
+- Merges missing city/state/zip/coordinates into partial address rows so the single WordPress `clinic_address` value is fully composed for map pin usage.
+
 ## 1.4.4
 
 - Fixed temporary clinic fallback matching by name to use a valid WordPress query path and exact title comparison.

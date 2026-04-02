@@ -1401,16 +1401,131 @@ class Clinic_Sync {
 	 */
 	private function collect_raw_addresses( array $clinic ): array {
 		$source = $clinic['clinic_addresses'] ?? ( $clinic['addresses'] ?? array() );
+		$fallback_address = $this->build_fallback_address_from_clinic( $clinic );
 		if ( is_array( $source ) ) {
+			if ( empty( $source ) ) {
+				return ! empty( $fallback_address ) ? array( $fallback_address ) : array();
+			}
+
+			if ( ! empty( $fallback_address ) ) {
+				foreach ( $source as $index => $item ) {
+					if ( ! is_array( $item ) ) {
+						continue;
+					}
+
+					$source[ $index ] = $this->merge_address_fallback( $item, $fallback_address );
+				}
+			}
+
 			return $source;
 		}
 
 		if ( is_string( $source ) ) {
 			$parts = preg_split( '/\r\n|\r|\n/', $source );
-			return is_array( $parts ) ? $parts : array();
+			if ( ! is_array( $parts ) ) {
+				return ! empty( $fallback_address ) ? array( $fallback_address ) : array();
+			}
+
+			$parts = array_values(
+				array_filter(
+					array_map(
+						static function ( $line ) {
+							return trim( (string) $line );
+						},
+						$parts
+					),
+					static function ( $line ) {
+						return '' !== $line;
+					}
+				)
+			);
+
+			if ( empty( $parts ) && ! empty( $fallback_address ) ) {
+				return array( $fallback_address );
+			}
+
+			return $parts;
+		}
+
+		if ( ! empty( $fallback_address ) ) {
+			return array( $fallback_address );
 		}
 
 		return array();
+	}
+
+	/**
+	 * @param array<string,mixed> $address
+	 * @param array<string,mixed> $fallback
+	 * @return array<string,mixed>
+	 */
+	private function merge_address_fallback( array $address, array $fallback ): array {
+		$map = array(
+			'street'       => array( 'street', 'line1' ),
+			'line2'        => array( 'line2', 'suite', 'unit', 'address2' ),
+			'city'         => array( 'city' ),
+			'state'        => array( 'state', 'region' ),
+			'zip'          => array( 'zip', 'postal_code' ),
+			'lat'          => array( 'lat', 'latitude' ),
+			'lng'          => array( 'lng', 'longitude', 'lon', 'long' ),
+			'full_address' => array( 'full_address', 'address' ),
+		);
+
+		foreach ( $map as $fallback_key => $address_keys ) {
+			$fallback_value = $fallback[ $fallback_key ] ?? '';
+			if ( ! is_scalar( $fallback_value ) || '' === trim( (string) $fallback_value ) ) {
+				continue;
+			}
+
+			$has_value = false;
+			foreach ( $address_keys as $address_key ) {
+				$current = $address[ $address_key ] ?? '';
+				if ( is_scalar( $current ) && '' !== trim( (string) $current ) ) {
+					$has_value = true;
+					break;
+				}
+			}
+
+			if ( $has_value ) {
+				continue;
+			}
+
+			$address[ $address_keys[0] ] = $fallback_value;
+		}
+
+		return $address;
+	}
+
+	/**
+	 * @param array<string,mixed> $clinic
+	 * @return array<string,string>
+	 */
+	private function build_fallback_address_from_clinic( array $clinic ): array {
+		$street = sanitize_text_field( (string) ( $clinic['street'] ?? $clinic['line1'] ?? $clinic['address_line_1'] ?? $clinic['address1'] ?? $clinic['address'] ?? '' ) );
+		$line2  = sanitize_text_field( (string) ( $clinic['line2'] ?? $clinic['suite'] ?? $clinic['unit'] ?? $clinic['address2'] ?? $clinic['address_line_2'] ?? '' ) );
+		$city   = sanitize_text_field( (string) ( $clinic['city'] ?? $clinic['town'] ?? '' ) );
+		$state  = sanitize_text_field( (string) ( $clinic['state'] ?? $clinic['region'] ?? $clinic['province'] ?? '' ) );
+		$zip    = sanitize_text_field( (string) ( $clinic['zip'] ?? $clinic['zipcode'] ?? $clinic['postal_code'] ?? $clinic['postalCode'] ?? '' ) );
+
+		$lat = $this->normalize_coordinate_value( $clinic['lat'] ?? $clinic['latitude'] ?? null );
+		$lng = $this->normalize_coordinate_value( $clinic['lng'] ?? $clinic['longitude'] ?? $clinic['lon'] ?? $clinic['long'] ?? null );
+
+		$full_address = sanitize_text_field( (string) ( $clinic['full_address'] ?? $clinic['formatted_address'] ?? $clinic['clinic_address'] ?? '' ) );
+
+		if ( '' === $street && '' === $city && '' === $state && '' === $zip && '' === $full_address ) {
+			return array();
+		}
+
+		return array(
+			'street'       => $street,
+			'line2'        => $line2,
+			'city'         => $city,
+			'state'        => $state,
+			'zip'          => $zip,
+			'lat'          => sanitize_text_field( $lat ),
+			'lng'          => sanitize_text_field( $lng ),
+			'full_address' => $full_address,
+		);
 	}
 
 	/**
