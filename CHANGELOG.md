@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2
+
+- Fixed image importer extension handling to preserve `.svg` files instead of forcing unsupported URLs to `.jpg`.
+- Added MIME fallback mapping so SVG imports are saved with `image/svg+xml` when WordPress cannot infer the type.
+
 ## 1.4.1
 
 - Removed the `Enable Mock API` and `Dry Run Mode` checkboxes from plugin settings.

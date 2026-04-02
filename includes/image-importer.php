@@ -105,7 +105,7 @@ class Image_Importer {
 		}
 
 		$filetype = wp_check_filetype( basename( $target_file ), null );
-		$mime     = ! empty( $filetype['type'] ) ? $filetype['type'] : 'image/jpeg';
+		$mime     = ! empty( $filetype['type'] ) ? $filetype['type'] : self::get_mime_type_from_extension( (string) pathinfo( $target_file, PATHINFO_EXTENSION ) );
 		$file_url = trailingslashit( (string) $upload_dir['baseurl'] ) . trim( $subdir, '/' ) . '/' . basename( $target_file );
 
 		$attachment_id = wp_insert_attachment(
@@ -141,11 +141,26 @@ class Image_Importer {
 		$extension = $path ? pathinfo( (string) $path, PATHINFO_EXTENSION ) : '';
 		$extension = strtolower( (string) $extension );
 
-		$allowed = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+		$allowed = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg' );
 		if ( empty( $extension ) || ! in_array( $extension, $allowed, true ) ) {
 			return 'jpg';
 		}
 
 		return $extension;
+	}
+
+	private static function get_mime_type_from_extension( string $extension ): string {
+		$extension = strtolower( trim( $extension ) );
+
+		$mime_types = array(
+			'jpg'  => 'image/jpeg',
+			'jpeg' => 'image/jpeg',
+			'png'  => 'image/png',
+			'gif'  => 'image/gif',
+			'webp' => 'image/webp',
+			'svg'  => 'image/svg+xml',
+		);
+
+		return $mime_types[ $extension ] ?? 'image/jpeg';
 	}
 }
