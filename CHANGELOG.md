@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0
+
+- Clinics with a valid `organization_id` but no `clinic_name` are now skipped — prevents `Temporary Clinic xxxxxxxx` records from being created.
+
 ## 1.4.9
 
 - Clinics missing `organization_id` are now skipped entirely instead of being created as temporary placeholder records.

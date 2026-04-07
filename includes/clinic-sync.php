@@ -57,6 +57,16 @@ class Clinic_Sync {
 				continue;
 			}
 
+			// Skip clinics with no name — prevents "Temporary Clinic xxxxxxxx" records.
+			if ( '' === $clinic_name ) {
+				$results['invalid_clinics']++;
+				$results['warnings'][] = sprintf(
+					'Clinic with organization_id "%s" skipped — missing clinic name.',
+					$organization_id
+				);
+				continue;
+			}
+
 			$results['valid_clinics']++;
 
 			$temp_key = $this->build_temp_key( 'clinic', $site_slug, $clinic_name, $phone_for_key );
