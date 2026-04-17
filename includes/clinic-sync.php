@@ -473,6 +473,33 @@ class Clinic_Sync {
 			if ( '' !== $primary_address ) {
 				update_post_meta( $post_id, 'clinic_address', $primary_address );
 			}
+
+			$primary_parts = $this->extract_primary_address_parts( $addresses );
+			if ( ! empty( $primary_parts ) ) {
+				update_post_meta( $post_id, 'clinic_city', (string) ( $primary_parts['city'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_state', (string) ( $primary_parts['state'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_zip', (string) ( $primary_parts['zip'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_lat', (string) ( $primary_parts['lat'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_lng', (string) ( $primary_parts['lng'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_latitude', (string) ( $primary_parts['lat'] ?? '' ) );
+				update_post_meta( $post_id, 'clinic_longitude', (string) ( $primary_parts['lng'] ?? '' ) );
+				update_post_meta( $post_id, '_cpt360_clinic_city', (string) ( $primary_parts['city'] ?? '' ) );
+				update_post_meta( $post_id, '_cpt360_clinic_zip', (string) ( $primary_parts['zip'] ?? '' ) );
+				update_post_meta( $post_id, '_cpt360_clinic_lat', (string) ( $primary_parts['lat'] ?? '' ) );
+				update_post_meta( $post_id, '_cpt360_clinic_lng', (string) ( $primary_parts['lng'] ?? '' ) );
+			}
+		} else {
+			delete_post_meta( $post_id, 'clinic_city' );
+			delete_post_meta( $post_id, 'clinic_state' );
+			delete_post_meta( $post_id, 'clinic_zip' );
+			delete_post_meta( $post_id, 'clinic_lat' );
+			delete_post_meta( $post_id, 'clinic_lng' );
+			delete_post_meta( $post_id, 'clinic_latitude' );
+			delete_post_meta( $post_id, 'clinic_longitude' );
+			delete_post_meta( $post_id, '_cpt360_clinic_city' );
+			delete_post_meta( $post_id, '_cpt360_clinic_zip' );
+			delete_post_meta( $post_id, '_cpt360_clinic_lat' );
+			delete_post_meta( $post_id, '_cpt360_clinic_lng' );
 		}
 
 		$states = $this->normalize_clinic_states( $clinic );
@@ -921,6 +948,29 @@ class Clinic_Sync {
 		}
 
 		return implode( ', ', $parts );
+	}
+
+	/**
+	 * @param array<int,array<string,mixed>> $addresses
+	 * @return array<string,string>
+	 */
+	private function extract_primary_address_parts( array $addresses ): array {
+		if ( empty( $addresses ) ) {
+			return array();
+		}
+
+		$first = reset( $addresses );
+		if ( ! is_array( $first ) ) {
+			return array();
+		}
+
+		return array(
+			'city'  => sanitize_text_field( (string) ( $first['city'] ?? '' ) ),
+			'state' => sanitize_text_field( (string) ( $first['state'] ?? '' ) ),
+			'zip'   => sanitize_text_field( (string) ( $first['zip'] ?? '' ) ),
+			'lat'   => sanitize_text_field( (string) ( $first['lat'] ?? $first['latitude'] ?? '' ) ),
+			'lng'   => sanitize_text_field( (string) ( $first['lng'] ?? $first['longitude'] ?? '' ) ),
+		);
 	}
 
 	/**

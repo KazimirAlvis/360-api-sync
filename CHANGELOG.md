@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+- Added top-level clinic primary-address meta writes for `clinic_city`, `clinic_state`, `clinic_zip`, `clinic_lat`, `clinic_lng`, `clinic_latitude`, and `clinic_longitude`.
+- Improves compatibility with state-map templates that read separate city/state/lat/lng meta keys instead of nested `clinic_addresses` arrays.
+
 ## 1.5.0
 
 - Clinics with a valid `organization_id` but no `clinic_name` are now skipped — prevents `Temporary Clinic xxxxxxxx` records from being created.
