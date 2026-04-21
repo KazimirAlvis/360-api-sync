@@ -476,30 +476,62 @@ class Clinic_Sync {
 
 			$primary_parts = $this->extract_primary_address_parts( $addresses );
 			if ( ! empty( $primary_parts ) ) {
-				update_post_meta( $post_id, 'clinic_city', (string) ( $primary_parts['city'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_state', (string) ( $primary_parts['state'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_zip', (string) ( $primary_parts['zip'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_lat', (string) ( $primary_parts['lat'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_lng', (string) ( $primary_parts['lng'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_latitude', (string) ( $primary_parts['lat'] ?? '' ) );
-				update_post_meta( $post_id, 'clinic_longitude', (string) ( $primary_parts['lng'] ?? '' ) );
-				update_post_meta( $post_id, '_cpt360_clinic_city', (string) ( $primary_parts['city'] ?? '' ) );
-				update_post_meta( $post_id, '_cpt360_clinic_zip', (string) ( $primary_parts['zip'] ?? '' ) );
-				update_post_meta( $post_id, '_cpt360_clinic_lat', (string) ( $primary_parts['lat'] ?? '' ) );
-				update_post_meta( $post_id, '_cpt360_clinic_lng', (string) ( $primary_parts['lng'] ?? '' ) );
+				$primary_city  = (string) ( $primary_parts['city'] ?? '' );
+				$primary_state = (string) ( $primary_parts['state'] ?? '' );
+				$primary_zip   = (string) ( $primary_parts['zip'] ?? '' );
+				$primary_lat   = (string) ( $primary_parts['lat'] ?? '' );
+				$primary_lng   = (string) ( $primary_parts['lng'] ?? '' );
+
+				$address_meta_map = array(
+					'clinic_city'         => $primary_city,
+					'clinic_state'        => $primary_state,
+					'clinic_zip'          => $primary_zip,
+					'clinic_lat'          => $primary_lat,
+					'clinic_lng'          => $primary_lng,
+					'clinic_latitude'     => $primary_lat,
+					'clinic_longitude'    => $primary_lng,
+					'_cpt360_clinic_city' => $primary_city,
+					'_cpt360_clinic_zip'  => $primary_zip,
+					'_cpt360_clinic_lat'  => $primary_lat,
+					'_cpt360_clinic_lng'  => $primary_lng,
+					'city'                => $primary_city,
+					'state'               => $primary_state,
+					'zip'                 => $primary_zip,
+					'lat'                 => $primary_lat,
+					'lng'                 => $primary_lng,
+					'latitude'            => $primary_lat,
+					'longitude'           => $primary_lng,
+				);
+
+				foreach ( $address_meta_map as $meta_key => $meta_value ) {
+					update_post_meta( $post_id, (string) $meta_key, (string) $meta_value );
+				}
 			}
 		} else {
-			delete_post_meta( $post_id, 'clinic_city' );
-			delete_post_meta( $post_id, 'clinic_state' );
-			delete_post_meta( $post_id, 'clinic_zip' );
-			delete_post_meta( $post_id, 'clinic_lat' );
-			delete_post_meta( $post_id, 'clinic_lng' );
-			delete_post_meta( $post_id, 'clinic_latitude' );
-			delete_post_meta( $post_id, 'clinic_longitude' );
-			delete_post_meta( $post_id, '_cpt360_clinic_city' );
-			delete_post_meta( $post_id, '_cpt360_clinic_zip' );
-			delete_post_meta( $post_id, '_cpt360_clinic_lat' );
-			delete_post_meta( $post_id, '_cpt360_clinic_lng' );
+			$address_meta_keys = array(
+				'clinic_city',
+				'clinic_state',
+				'clinic_zip',
+				'clinic_lat',
+				'clinic_lng',
+				'clinic_latitude',
+				'clinic_longitude',
+				'_cpt360_clinic_city',
+				'_cpt360_clinic_zip',
+				'_cpt360_clinic_lat',
+				'_cpt360_clinic_lng',
+				'city',
+				'state',
+				'zip',
+				'lat',
+				'lng',
+				'latitude',
+				'longitude',
+			);
+
+			foreach ( $address_meta_keys as $meta_key ) {
+				delete_post_meta( $post_id, (string) $meta_key );
+			}
 		}
 
 		$states = $this->normalize_clinic_states( $clinic );

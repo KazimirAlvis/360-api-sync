@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2
+
+- Added additional address meta aliases (`city`, `state`, `zip`, `lat`, `lng`, `latitude`, `longitude`) so admin field groups and map templates using different key names are populated.
+
 ## 1.5.1
 
 - Added top-level clinic primary-address meta writes for `clinic_city`, `clinic_state`, `clinic_zip`, `clinic_lat`, `clinic_lng`, `clinic_latitude`, and `clinic_longitude`.
